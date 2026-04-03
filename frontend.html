@@ -1,0 +1,1518 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pokemon Index Fund App</title>
+    <style>
+      :root {
+        --bg: #dfdfdf;
+        --ink: #050505;
+        --muted: #4b5563;
+        --line: #000;
+        --white: #fff;
+        --red: #d62323;
+        --green: #0f8d3f;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        font-family: "Arial Black", "Franklin Gothic Medium", "Segoe UI", sans-serif;
+        background: var(--bg);
+        min-height: 100vh;
+      }
+
+      .top-nav {
+        width: 100%;
+        border-bottom: 3px solid var(--line);
+        background: #efefef;
+      }
+
+      .top-nav-inner {
+        width: min(1520px, 98vw);
+        margin: 0 auto;
+        padding: 10px 0;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        justify-content: center;
+        overflow: auto;
+      }
+
+      .poke-dot {
+        min-width: 40px;
+        width: 40px;
+        height: 40px;
+        border: 3px solid #000;
+        border-radius: 999px;
+        background: linear-gradient(#ef4444 0 46%, #fff 46% 54%, #fff 100%);
+        position: relative;
+        display: inline-block;
+        cursor: pointer;
+      }
+
+      .poke-dot::after {
+        content: "";
+        width: 11px;
+        height: 11px;
+        border: 2px solid #000;
+        border-radius: 999px;
+        background: #fff;
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+      }
+
+      .poke-dot:focus {
+        outline: 3px solid #000;
+        outline-offset: 3px;
+      }
+
+      .nav-pill {
+        border: 3px solid #000;
+        border-radius: 10px;
+        background: #fff;
+        color: #000;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        font-size: 0.76rem;
+        font-weight: 900;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        padding: 9px 12px;
+        white-space: nowrap;
+        box-shadow: 0 3px 0 #000;
+        cursor: pointer;
+      }
+
+      .nav-pill.active {
+        background: var(--red);
+        color: #fff;
+      }
+
+      .container {
+        width: min(1480px, 98vw);
+        margin: 28px auto 64px;
+      }
+
+      .app-page {
+        display: none;
+      }
+
+      .app-page.active {
+        display: block;
+      }
+
+      .muted-copy {
+        margin: 12px 14px 0;
+        color: var(--muted);
+        font-family: "Segoe UI", sans-serif;
+        font-weight: 700;
+      }
+
+      .code-block {
+        margin: 14px;
+        padding: 14px;
+        border: 3px solid #000;
+        background: #fff;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 0.82rem;
+        font-weight: 700;
+        white-space: pre-wrap;
+      }
+
+      .hero {
+        text-align: center;
+        margin-bottom: 20px;
+        animation: fadeInUp 0.42s ease;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(2rem, 4vw, 3.35rem);
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        text-shadow: 4px 4px 0 #0f172a2b;
+      }
+
+      .sub {
+        margin: 12px auto 0;
+        color: #111827;
+        font-family: "Segoe UI", sans-serif;
+        max-width: 760px;
+        font-size: clamp(1rem, 1.6vw, 1.25rem);
+        font-weight: 700;
+      }
+
+      .row {
+        display: grid;
+        gap: 12px;
+      }
+
+      .row.three {
+        margin-top: 24px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .panel {
+        margin-top: 20px;
+        border: 3px solid var(--line);
+        background: #ededed;
+        box-shadow: 4px 4px 0 #000;
+        overflow: hidden;
+        animation: fadeInUp 0.45s ease;
+      }
+
+      .panel-title {
+        margin: 0;
+        padding: 14px 18px;
+        border-bottom: 3px solid var(--line);
+        font-size: 1.8rem;
+        text-transform: uppercase;
+        text-align: center;
+      }
+
+      .panel-subtitle {
+        margin: 0;
+        padding: 10px 18px;
+        border-bottom: 3px solid var(--line);
+        font-size: 1.18rem;
+        text-transform: uppercase;
+      }
+
+      .stat-card {
+        border: 3px solid #000;
+        background: #f8f8f8;
+        padding: 14px;
+        box-shadow: 3px 3px 0 #000;
+      }
+
+      .stat-label {
+        color: #111827;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+      }
+
+      .stat-value {
+        margin-top: 8px;
+        font-size: clamp(1.15rem, 2vw, 1.5rem);
+        font-family: "Segoe UI", sans-serif;
+        font-weight: 800;
+      }
+
+      .good {
+        color: var(--green);
+      }
+
+      .bad {
+        color: #c41212;
+      }
+
+      .table-wrap {
+        overflow-x: visible;
+        overflow-y: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 0;
+        table-layout: fixed;
+      }
+
+      thead th {
+        background: #060606;
+        color: #fff;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 12px 14px;
+        border-bottom: 2px solid #111827;
+        white-space: normal;
+        overflow-wrap: anywhere;
+        font-size: 0.9rem;
+        font-family: "Segoe UI", sans-serif;
+        font-weight: 700;
+      }
+
+      th {
+        text-transform: uppercase;
+      }
+
+      tr:hover td {
+        background: #f6f6f6;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: 1.6fr 1.1fr;
+        gap: 20px;
+      }
+
+      .controls {
+        padding: 14px;
+        display: grid;
+        gap: 10px;
+        border-bottom: 3px solid #000;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        font-size: 0.86rem;
+        text-transform: uppercase;
+      }
+
+      select,
+      input {
+        border: 3px solid #000;
+        padding: 10px 12px;
+        font-size: 0.93rem;
+        background: #fff;
+        font-family: "Segoe UI", sans-serif;
+        font-weight: 700;
+      }
+
+      .button-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      button {
+        cursor: pointer;
+        border: 3px solid #000;
+        padding: 10px 14px;
+        font-weight: 900;
+        font-size: 0.86rem;
+        text-transform: uppercase;
+        box-shadow: 2px 2px 0 #000;
+      }
+
+      .buy {
+        background: #000;
+        color: #fff;
+      }
+
+      .sell {
+        background: #fff;
+        color: #000;
+      }
+
+      .ghost {
+        background: #d62323;
+        color: #fff;
+      }
+
+      .chart-wrap {
+        position: relative;
+        padding: 14px;
+        border-bottom: 3px solid #000;
+      }
+
+      canvas {
+        width: 100%;
+        height: 280px;
+        background: #fff;
+        border: 3px solid #000;
+      }
+
+      .chart-tooltip {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        z-index: 3;
+        padding: 6px 8px;
+        border: 2px solid #000;
+        background: #fff;
+        font-family: "Segoe UI", sans-serif;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+        pointer-events: none;
+        display: none;
+      }
+
+      .constituents {
+        max-height: 340px;
+        overflow: auto;
+      }
+
+      .toast {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        background: #000;
+        color: #fff;
+        padding: 12px 14px;
+        border: 3px solid #000;
+        box-shadow: 3px 3px 0 #000;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: 0.25s ease;
+        font-family: "Segoe UI", sans-serif;
+        font-weight: 700;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 900px) {
+        .container {
+          width: 94vw;
+        }
+
+        .table-wrap {
+          overflow-x: auto;
+        }
+
+        table {
+          min-width: 680px;
+          table-layout: auto;
+        }
+
+        th,
+        td {
+          white-space: nowrap;
+          overflow-wrap: normal;
+        }
+
+        .row.three,
+        .split {
+          grid-template-columns: 1fr;
+        }
+
+        .panel-title {
+          font-size: 1.35rem;
+        }
+
+        .top-nav-inner {
+          padding-inline: 8px;
+          justify-content: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top-nav">
+      <div class="top-nav-inner">
+        <a
+          class="poke-dot"
+          data-page="marketplace"
+          href="#marketplace"
+          title="Open index marketplace"
+          aria-label="Open index marketplace"
+        ></a>
+        <a class="nav-pill" data-page="dashboard" href="#dashboard">Dashboard</a>
+        <a class="nav-pill" data-page="marketplace" href="#marketplace">Index Marketplace</a>
+        <a class="nav-pill" data-page="fund-explorer" href="#fund-explorer">Fund Explorer</a>
+        <a class="nav-pill" data-page="era-funds" href="#era-funds">Description</a>
+        <a class="nav-pill" data-page="basket-builder" href="#basket-builder">Basket Builder</a>
+        <a class="nav-pill" data-page="price-history" href="#price-history">Price History</a>
+        <a class="nav-pill" data-page="paper-trading" href="#paper-trading">Paper Trading</a>
+        <a class="nav-pill" data-page="portfolio" href="#portfolio">Portfolio</a>
+      </div>
+    </header>
+
+    <div class="container">
+      <section class="app-page" id="page-description">
+        <section class="hero">
+          <h1>Project Description</h1>
+          <p class="sub">
+            This app is a Pokemon trading card index-fund prototype. It calculates a live index price by
+            combining card prices proportionally to each card’s basket contribution, and then lets you
+            explore history, basket composition, and paper-trade the index funds.
+          </p>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">How Pricing Works</h2>
+          <div class="code-block">Index Price = Σ(card price × basket contribution % / 100)</div>
+          <p class="muted-copy">
+            Prices are built from card-level market data and persisted in cache/history so graphs and index
+            views still work when live calls are temporarily unavailable.
+          </p>
+        </section>
+        <section class="panel">
+          <h2 class="panel-title">What This Solves</h2>
+          <p class="muted-copy">
+            Most card investing is concentrated and operationally heavy. You need to choose individual cards,
+            manage storage, and accept single-card risk if one position underperforms. This project shifts that
+            model to index-style exposure so users track a weighted basket instead of one collectible.
+          </p>
+          <p class="muted-copy">
+            The broad market index provides diversified exposure, while era-focused index funds let users target
+            specific periods such as Diamond and Pearl, Platinum, and HeartGold and SoulSilver.
+          </p>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">How To Use The App</h2>
+          <p class="muted-copy">
+            1. Open Index Marketplace to compare index funds.
+            2. Select a fund to inspect history and constituents.
+            3. Use Basket Builder to see set-level contribution and weighted value.
+            4. Use Paper Trading to simulate buy and sell actions.
+            5. Use Data Cache to validate cache and database status.
+          </p>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-dashboard">
+        <section class="hero">
+          <h1>Pokemon Card Index Exchange</h1>
+          <p class="sub">
+            Rarity + Nostalgia + Demand = Price. Invest in broad and era-focused
+            Pokemon card baskets without storing individual cards.
+          </p>
+          <div class="row three" id="topStats"></div>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">Market Snapshot</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fund</th>
+                  <th>Type</th>
+                  <th>Index Price (GBP)</th>
+                  <th>Daily Change</th>
+                </tr>
+              </thead>
+              <tbody id="dashboardFundRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-marketplace">
+        <section class="panel">
+          <h2 class="panel-title">Index Marketplace</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fund</th>
+                  <th>Type</th>
+                  <th>Index Price (GBP)</th>
+                  <th>Daily Change</th>
+                </tr>
+              </thead>
+              <tbody id="fundRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="split">
+          <section class="panel">
+            <h2 class="panel-title">Selected Fund Detail</h2>
+            <div class="chart-wrap">
+              <canvas id="chart" width="920" height="280"></canvas>
+            </div>
+            <div class="table-wrap constituents">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Card</th>
+                    <th>Set</th>
+                    <th>Rarity</th>
+                    <th>Price (GBP)</th>
+                    <th>Basket Contribution %</th>
+                  </tr>
+                </thead>
+                <tbody id="constituentsRows"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2 class="panel-title">Paper Trading</h2>
+            <div class="controls">
+              <label>
+                Fund
+                <select id="tradeFund"></select>
+              </label>
+              <label>
+                Amount (GBP)
+                <input id="tradeAmount" type="number" min="1" value="250" />
+              </label>
+              <div class="button-row">
+                <button class="buy" id="buyBtn">Buy</button>
+                <button class="sell" id="sellBtn">Sell</button>
+                <button class="ghost" id="refreshBtn">Refresh</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <tbody id="portfolioStats"></tbody>
+              </table>
+            </div>
+            <h2 class="panel-title">Holdings</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fund</th>
+                    <th>Units</th>
+                    <th>Price</th>
+                    <th>Market Value (GBP)</th>
+                  </tr>
+                </thead>
+                <tbody id="positionsRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-fund-explorer">
+        <section class="panel">
+          <h2 class="panel-title">Fund Explorer</h2>
+          <div class="controls">
+            <label>
+              Fund
+              <select id="explorerFund"></select>
+            </label>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <tbody id="explorerMetaRows"></tbody>
+            </table>
+          </div>
+          <div class="table-wrap constituents">
+            <table>
+              <thead>
+                <tr>
+                  <th>Card</th>
+                  <th>Set</th>
+                  <th>Price (GBP)</th>
+                  <th>Contribution</th>
+                </tr>
+              </thead>
+              <tbody id="explorerConstituentsRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-era-funds">
+        <section class="hero">
+          <h1>Project Overview</h1>
+          <p class="sub">
+            This app is a Pokemon card index-fund prototype. It tracks market movement by aggregating
+            card prices into weighted baskets and exposing each basket as a single index price.
+          </p>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">How The Index Works</h2>
+          <div class="code-block">Index Price = sum(card price * basket contribution % / 100)</div>
+          <p class="muted-copy">
+            Each card contributes according to its basket weight. This gives diversified exposure across
+            multiple cards and sets, rather than relying on one collectible.
+          </p>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">What You Can Do</h2>
+          <p class="muted-copy">
+            1. Compare index funds in Index Marketplace.
+            2. Inspect card-level composition in Fund Explorer.
+            3. Review set-level weighting in Basket Builder.
+            4. Analyze trends in Price History.
+            5. Simulate trades in Paper Trading and monitor results in Portfolio.
+          </p>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-basket-builder">
+        <section class="panel">
+          <h2 class="panel-title">Basket Builder</h2>
+          <div class="controls">
+            <label>
+              Fund
+              <select id="builderFund"></select>
+            </label>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Set</th>
+                  <th>Cards</th>
+                  <th>Contribution %</th>
+                  <th>Weighted Value (GBP)</th>
+                </tr>
+              </thead>
+              <tbody id="builderSetRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-price-history">
+        <section class="panel">
+          <h2 class="panel-title">Price History</h2>
+          <div class="controls">
+            <label>
+              Fund
+              <select id="historyFund"></select>
+            </label>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="historyChart" width="920" height="280"></canvas>
+          </div>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-paper-trading">
+        <section class="panel">
+          <h2 class="panel-title">Paper Trading Activity</h2>
+          <p class="muted-copy">
+            Use buy and sell on the Index Marketplace page. This page tracks your latest paper trades.
+          </p>
+          <div class="controls">
+            <div class="button-row">
+              <button class="ghost" id="openMarketplaceTradeBtn">Open Trading Panel</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Type</th>
+                  <th>Fund</th>
+                  <th>Amount (GBP)</th>
+                  <th>Units</th>
+                  <th>Price</th>
+                </tr>
+              </thead>
+              <tbody id="tradeHistoryRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-portfolio">
+        <section class="panel">
+          <h2 class="panel-title">Portfolio Overview</h2>
+          <div class="table-wrap">
+            <table>
+              <tbody id="portfolioSummaryRows"></tbody>
+            </table>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fund</th>
+                  <th>Units</th>
+                  <th>Price</th>
+                  <th>Market Value (GBP)</th>
+                </tr>
+              </thead>
+              <tbody id="portfolioPagePositionsRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+      const PAGE_KEYS = [
+        "dashboard",
+        "marketplace",
+        "fund-explorer",
+        "era-funds",
+        "basket-builder",
+        "price-history",
+        "paper-trading",
+        "portfolio",
+      ];
+      const DEFAULT_PAGE = "marketplace";
+
+      const state = {
+        funds: [],
+        selectedFundId: null,
+        selectedFund: null,
+        portfolio: null,
+        chartPoints: [],
+        historyChartPoints: [],
+        activePage: DEFAULT_PAGE,
+      };
+
+      const api = {
+        async getFunds(forceRefresh = false) {
+          const qs = forceRefresh ? "?refresh=1" : "";
+          const res = await fetch(`/api/funds${qs}`);
+          if (!res.ok) throw new Error("Failed to load funds");
+          return res.json();
+        },
+        async getFund(id) {
+          const res = await fetch(`/api/funds/${id}`);
+          if (!res.ok) throw new Error("Failed to load fund");
+          return res.json();
+        },
+        async getPortfolio() {
+          const res = await fetch("/api/portfolio");
+          if (!res.ok) throw new Error("Failed to load portfolio");
+          return res.json();
+        },
+        async trade(type, payload) {
+          const res = await fetch(`/api/portfolio/${type}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Trade failed");
+          return data;
+        },
+      };
+
+      let fmtMoney = (n) =>
+        `£${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
+      const fmtPct = (n) =>
+        `${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}%`;
+      fmtMoney = (n) =>
+        `\u00A3${Number(n || 0).toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
+
+      function getCurrentPrice(fund) {
+        const price = Number(fund?.priceGBP ?? fund?.blendedPriceGBP ?? fund?.nav ?? 0);
+        return Number.isFinite(price) && price > 0 ? price : 0;
+      }
+
+      function normalizeFundName(name) {
+        return String(name || "")
+          .replace(/\bETF\b/gi, "Index")
+          .replace(/\s{2,}/g, " ")
+          .trim();
+      }
+
+      function normalizeDisplayText(text) {
+        return String(text || "")
+          .replace(/\bETF-style\b/gi, "index-style")
+          .replace(/\bETF\b/gi, "Index")
+          .replace(/\betf\b/g, "index")
+          .replace(/\s{2,}/g, " ")
+          .trim();
+      }
+
+      function normalizePageKey(value) {
+        return PAGE_KEYS.includes(String(value || "")) ? String(value) : DEFAULT_PAGE;
+      }
+
+      function getPageFromHash() {
+        return normalizePageKey(String(window.location.hash || "").replace(/^#/, ""));
+      }
+
+      function setActivePage(pageKey, updateHash = true) {
+        const page = normalizePageKey(pageKey);
+        state.activePage = page;
+
+        for (const view of document.querySelectorAll(".app-page")) {
+          view.classList.toggle("active", view.id === `page-${page}`);
+        }
+        for (const tab of document.querySelectorAll(".nav-pill[data-page]")) {
+          tab.classList.toggle("active", tab.getAttribute("data-page") === page);
+        }
+
+        if (updateHash) {
+          const nextHash = `#${page}`;
+          if (window.location.hash !== nextHash) {
+            window.location.hash = nextHash;
+          }
+        }
+
+        if (page === "price-history") {
+          drawHistoryPageChart();
+        }
+      }
+
+      function setFundSelectOptions(selectIds) {
+        for (const id of selectIds) {
+          const select = document.getElementById(id);
+          if (!select) continue;
+          const oldValue = select.value;
+          select.innerHTML = state.funds
+            .map((f) => `<option value="${f.id}">${normalizeFundName(f.name)}</option>`)
+            .join("");
+          const targetValue = state.selectedFundId || oldValue || state.funds[0]?.id || "";
+          if (targetValue) {
+            select.value = targetValue;
+          }
+        }
+      }
+
+      function toast(message, isError = false) {
+        const el = document.getElementById("toast");
+        if (!el) return;
+        el.textContent = message;
+        el.style.background = isError ? "#7f1d1d" : "#111827";
+        el.classList.add("show");
+        setTimeout(() => el.classList.remove("show"), 2200);
+      }
+
+      function renderTopStats() {
+        const p = state.portfolio;
+        const container = document.getElementById("topStats");
+        if (!p || !container) return;
+        const cards = [
+          { label: "Total Portfolio", value: fmtMoney(p.totalValueGBP), cls: "" },
+          { label: "Cash", value: fmtMoney(p.cashGBP), cls: "" },
+          {
+            label: "PnL",
+            value: `${fmtMoney(p.pnlGBP)} (${fmtPct(p.pnlPct)})`,
+            cls: p.pnlGBP >= 0 ? "good" : "bad",
+          },
+        ];
+        container.innerHTML = cards
+          .map(
+            (c) => `
+            <article class="stat-card">
+              <div class="stat-label">${c.label}</div>
+              <div class="stat-value ${c.cls}">${c.value}</div>
+            </article>
+          `
+          )
+          .join("");
+      }
+
+      function renderFunds() {
+        const renderRows = (targetId, funds, destinationPage = null) => {
+          const body = document.getElementById(targetId);
+          if (!body) return;
+          body.innerHTML = funds
+            .map((f) => {
+              const changeClass = f.dayChangePct >= 0 ? "good" : "bad";
+              const selected = state.selectedFundId === f.id;
+              return `
+                <tr data-fund-id="${f.id}" style="${selected ? "outline:3px solid #d62323;" : ""}">
+                  <td><strong>${normalizeFundName(f.name)}</strong><br /><span style="font-size:12px;color:#6b7280;">${normalizeDisplayText(f.description || "")}</span></td>
+                  <td>${String(f.type || "").toUpperCase()}</td>
+                  <td>${fmtMoney(getCurrentPrice(f))}</td>
+                  <td class="${changeClass}">${fmtPct(f.dayChangePct)}</td>
+                </tr>
+              `;
+            })
+            .join("");
+
+          for (const tr of body.querySelectorAll("tr[data-fund-id]")) {
+            tr.addEventListener("click", async () => {
+              state.selectedFundId = tr.getAttribute("data-fund-id");
+              await loadSelectedFund();
+              renderFunds();
+              if (destinationPage) setActivePage(destinationPage);
+            });
+          }
+        };
+
+        renderRows("fundRows", state.funds);
+        renderRows("dashboardFundRows", state.funds, "fund-explorer");
+        setFundSelectOptions(["tradeFund", "explorerFund", "builderFund", "historyFund"]);
+      }
+
+      function renderPortfolio() {
+        const p = state.portfolio;
+        if (!p) return;
+        const summaryMarkup = `
+          <tr><th>Cash</th><td>${fmtMoney(p.cashGBP)}</td></tr>
+          <tr><th>Holdings Value</th><td>${fmtMoney(p.holdingsValueGBP)}</td></tr>
+          <tr><th>Total Value</th><td>${fmtMoney(p.totalValueGBP)}</td></tr>
+          <tr><th>Net Invested</th><td>${fmtMoney(p.netInvestedGBP)}</td></tr>
+        `;
+
+        const positionsMarkup =
+          p.positions.length === 0
+            ? `<tr><td colspan="4" style="color:#6b7280;">No positions yet.</td></tr>`
+            : p.positions
+                .map(
+                  (pos) => `
+                    <tr>
+                      <td>${normalizeFundName(pos.fundName)}</td>
+                      <td>${pos.units.toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                      <td>${fmtMoney(pos.priceGBP ?? pos.nav)}</td>
+                      <td>${fmtMoney(pos.marketValueGBP)}</td>
+                    </tr>
+                  `
+                )
+                .join("");
+
+        const portfolioStats = document.getElementById("portfolioStats");
+        if (portfolioStats) portfolioStats.innerHTML = summaryMarkup;
+
+        const positionsRows = document.getElementById("positionsRows");
+        if (positionsRows) positionsRows.innerHTML = positionsMarkup;
+
+        const portfolioSummaryRows = document.getElementById("portfolioSummaryRows");
+        if (portfolioSummaryRows) {
+          portfolioSummaryRows.innerHTML =
+            summaryMarkup +
+            `<tr><th>PnL</th><td class="${p.pnlGBP >= 0 ? "good" : "bad"}">${fmtMoney(
+              p.pnlGBP
+            )} (${fmtPct(p.pnlPct)})</td></tr>`;
+        }
+
+        const portfolioPagePositionsRows = document.getElementById("portfolioPagePositionsRows");
+        if (portfolioPagePositionsRows) portfolioPagePositionsRows.innerHTML = positionsMarkup;
+
+        const tradeHistoryRows = document.getElementById("tradeHistoryRows");
+        if (tradeHistoryRows) {
+          const txs = Array.isArray(p.transactions) ? p.transactions : [];
+          tradeHistoryRows.innerHTML =
+            txs.length === 0
+              ? `<tr><td colspan="6" style="color:#6b7280;">No trades yet.</td></tr>`
+              : txs
+                  .map((tx) => {
+                    const price = Number(tx.priceAtTrade ?? tx.navAtTrade ?? 0);
+                    return `
+                      <tr>
+                        <td>${new Date(tx.time).toLocaleString()}</td>
+                        <td>${tx.type}</td>
+                        <td>${normalizeFundName(tx.fundName)}</td>
+                        <td>${fmtMoney(tx.amountGBP)}</td>
+                        <td>${Number(tx.units || 0).toLocaleString(undefined, { maximumFractionDigits: 6 })}</td>
+                        <td>${fmtMoney(price)}</td>
+                      </tr>
+                    `;
+                  })
+                  .join("");
+        }
+      }
+
+      function renderConstituents() {
+        const fund = state.selectedFund;
+        const rows = document.getElementById("constituentsRows");
+        if (!rows) return;
+        if (!fund || !Array.isArray(fund.constituents)) {
+          rows.innerHTML = "";
+          return;
+        }
+        rows.innerHTML = fund.constituents
+          .slice(0, 60)
+          .map(
+            (c) => `
+            <tr>
+              <td>${c.name} #${c.number}</td>
+              <td>${c.setName}</td>
+              <td>${c.rarity}</td>
+              <td>${fmtMoney(c.priceGBP)}</td>
+              <td>${Number(c.contribution).toFixed(3)}%</td>
+            </tr>
+          `
+          )
+          .join("");
+      }
+
+      function renderFundStatus() {
+        const fund = state.selectedFund;
+        const panel = document.getElementById("chart")?.parentElement || null;
+        const existing = document.getElementById("fundStatus");
+        if (existing) existing.remove();
+        if (!fund?.warning || !panel) return;
+        const el = document.createElement("div");
+        el.id = "fundStatus";
+        el.style.marginTop = "8px";
+        el.style.fontFamily = "'Segoe UI', sans-serif";
+        el.style.fontSize = "12px";
+        el.style.fontWeight = "700";
+        el.style.color = "#7f1d1d";
+        el.textContent = fund.warning;
+        panel.appendChild(el);
+      }
+
+      function fmtDate(isoDate) {
+        const s = String(isoDate || "");
+        if (!s) return "";
+        const d = new Date(`${s}T00:00:00`);
+        if (Number.isNaN(d.getTime())) return s;
+        return d.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+      }
+
+      function getChartTooltip() {
+        let tip = document.getElementById("chartTooltip");
+        if (tip) return tip;
+        const panel = document.getElementById("chart")?.parentElement || null;
+        if (!panel) return null;
+        tip = document.createElement("div");
+        tip.id = "chartTooltip";
+        tip.className = "chart-tooltip";
+        panel.appendChild(tip);
+        return tip;
+      }
+
+      function hideChartTooltip() {
+        const tip = document.getElementById("chartTooltip");
+        if (!tip) return;
+        tip.style.display = "none";
+      }
+
+      function getHistoryChartTooltip() {
+        let tip = document.getElementById("historyChartTooltip");
+        if (tip) return tip;
+        const panel = document.getElementById("historyChart")?.parentElement || null;
+        if (!panel) return null;
+        tip = document.createElement("div");
+        tip.id = "historyChartTooltip";
+        tip.className = "chart-tooltip";
+        panel.appendChild(tip);
+        return tip;
+      }
+
+      function hideHistoryChartTooltip() {
+        const tip = document.getElementById("historyChartTooltip");
+        if (!tip) return;
+        tip.style.display = "none";
+      }
+
+      function handleChartHover(event) {
+        const points = Array.isArray(state.chartPoints) ? state.chartPoints : [];
+        if (!points.length) {
+          hideChartTooltip();
+          return;
+        }
+
+        const canvas = event.currentTarget;
+        const rect = canvas.getBoundingClientRect();
+        if (!rect.width || !rect.height) {
+          hideChartTooltip();
+          return;
+        }
+
+        const scaleX = canvas.width / rect.width;
+        const mouseX = (event.clientX - rect.left) * scaleX;
+
+        let nearest = points[0];
+        let bestDist = Math.abs(points[0].x - mouseX);
+        for (const point of points) {
+          const dist = Math.abs(point.x - mouseX);
+          if (dist < bestDist) {
+            bestDist = dist;
+            nearest = point;
+          }
+        }
+
+        const tip = getChartTooltip();
+        if (!tip) return;
+        tip.textContent = `${fmtDate(nearest.date)} | Price ${fmtMoney(nearest.price)}`;
+        tip.style.display = "block";
+
+        const xCss = nearest.x / scaleX;
+        const maxLeft = rect.width - tip.offsetWidth - 8;
+        const left = Math.max(8, Math.min(xCss + 10, Math.max(8, maxLeft)));
+        tip.style.left = `${left}px`;
+      }
+
+      function handleHistoryChartHover(event) {
+        const points = Array.isArray(state.historyChartPoints) ? state.historyChartPoints : [];
+        if (!points.length) {
+          hideHistoryChartTooltip();
+          return;
+        }
+
+        const canvas = event.currentTarget;
+        const rect = canvas.getBoundingClientRect();
+        if (!rect.width || !rect.height) {
+          hideHistoryChartTooltip();
+          return;
+        }
+
+        const scaleX = canvas.width / rect.width;
+        const mouseX = (event.clientX - rect.left) * scaleX;
+
+        let nearest = points[0];
+        let bestDist = Math.abs(points[0].x - mouseX);
+        for (const point of points) {
+          const dist = Math.abs(point.x - mouseX);
+          if (dist < bestDist) {
+            bestDist = dist;
+            nearest = point;
+          }
+        }
+
+        const tip = getHistoryChartTooltip();
+        if (!tip) return;
+        tip.textContent = `${fmtDate(nearest.date)} | Price ${fmtMoney(nearest.price)}`;
+        tip.style.display = "block";
+
+        const xCss = nearest.x / scaleX;
+        const maxLeft = rect.width - tip.offsetWidth - 8;
+        const left = Math.max(8, Math.min(xCss + 10, Math.max(8, maxLeft)));
+        tip.style.left = `${left}px`;
+      }
+
+      function getFundSeries(fund) {
+        const historySource = Array.isArray(fund?.history) ? fund.history : [];
+        let series = historySource
+          .map((p) => ({
+            date: String(p?.date || "").slice(0, 10),
+            price: Number(p?.price ?? p?.nav),
+          }))
+          .filter((p) => p.date && Number.isFinite(p.price) && p.price > 0);
+        if (series.length === 0) {
+          const fallbackPrice = getCurrentPrice(fund);
+          if (fallbackPrice > 0) {
+            series = [{ date: new Date().toISOString().slice(0, 10), price: fallbackPrice }];
+          }
+        }
+        if (series.length === 1) {
+          const d = new Date(`${series[0].date}T00:00:00`);
+          d.setDate(d.getDate() - 1);
+          series = [{ date: d.toISOString().slice(0, 10), price: series[0].price }, series[0]];
+        }
+        return series;
+      }
+
+      function drawFundChart(canvasId, titleSuffix, interactive = false) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        const fund = state.selectedFund;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (interactive) {
+          state.chartPoints = [];
+        } else if (canvasId === "historyChart") {
+          state.historyChartPoints = [];
+        }
+        if (!fund) return;
+        const series = getFundSeries(fund);
+        if (!series.length) return;
+
+        const data = series.map((p) => p.price);
+        const min = Math.min(...data);
+        const max = Math.max(...data);
+        const isFlat = Math.abs(max - min) < 1e-9;
+        const pad = 30;
+        const w = canvas.width - pad * 2;
+        const h = canvas.height - pad * 2;
+
+        ctx.strokeStyle = "#d1d5db";
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 4; i += 1) {
+          const y = pad + (h / 4) * i;
+          ctx.beginPath();
+          ctx.moveTo(pad, y);
+          ctx.lineTo(pad + w, y);
+          ctx.stroke();
+        }
+
+        const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        gradient.addColorStop(0, "rgba(0,0,0,0.24)");
+        gradient.addColorStop(1, "rgba(0,0,0,0.03)");
+
+        const points = data.map((value, i) => {
+          const x = pad + (i / Math.max(data.length - 1, 1)) * w;
+          const y = isFlat
+            ? pad + h * 0.5
+            : pad + ((max - value) / Math.max(max - min, 1)) * h;
+          return { x, y, price: value, date: series[i]?.date || "" };
+        });
+        if (interactive) {
+          state.chartPoints = points;
+        } else if (canvasId === "historyChart") {
+          state.historyChartPoints = points;
+        }
+
+        ctx.beginPath();
+        points.forEach((pt, i) => {
+          if (i === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        });
+        ctx.lineTo(pad + w, pad + h);
+        ctx.lineTo(pad, pad + h);
+        ctx.closePath();
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        ctx.beginPath();
+        points.forEach((pt, i) => {
+          if (i === 0) ctx.moveTo(pt.x, pt.y);
+          else ctx.lineTo(pt.x, pt.y);
+        });
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        const current = getCurrentPrice(fund) || data[data.length - 1];
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 14px 'Avenir Next', sans-serif";
+        ctx.fillText(`${normalizeFundName(fund.name)} ${titleSuffix}: ${fmtMoney(current)}`, pad, 20);
+      }
+
+      function drawChart() {
+        drawFundChart("chart", "Price", true);
+      }
+
+      function drawHistoryPageChart() {
+        drawFundChart("historyChart", "History", false);
+      }
+
+      function renderExplorer() {
+        const fund = state.selectedFund;
+        const metaRows = document.getElementById("explorerMetaRows");
+        const rows = document.getElementById("explorerConstituentsRows");
+        if (!metaRows || !rows) return;
+        if (!fund) {
+          metaRows.innerHTML = "";
+          rows.innerHTML = "";
+          return;
+        }
+
+        metaRows.innerHTML = `
+          <tr><th>Name</th><td>${normalizeFundName(fund.name)}</td></tr>
+          <tr><th>Type</th><td>${String(fund.type || "").toUpperCase()}</td></tr>
+          <tr><th>Index Price</th><td>${fmtMoney(getCurrentPrice(fund))}</td></tr>
+          <tr><th>Daily Change</th><td class="${Number(fund.dayChangePct) >= 0 ? "good" : "bad"}">${fmtPct(
+          fund.dayChangePct
+        )}</td></tr>
+          <tr><th>Cards</th><td>${Array.isArray(fund.constituents) ? fund.constituents.length : 0}</td></tr>
+          <tr><th>History Points</th><td>${getFundSeries(fund).length}</td></tr>
+        `;
+
+        rows.innerHTML = (Array.isArray(fund.constituents) ? fund.constituents : [])
+          .slice(0, 120)
+          .map(
+            (c) => `
+              <tr>
+                <td>${c.name} #${c.number}</td>
+                <td>${c.setName}</td>
+                <td>${fmtMoney(c.priceGBP)}</td>
+                <td>${Number(c.contribution || 0).toFixed(3)}%</td>
+              </tr>
+            `
+          )
+          .join("");
+      }
+
+      function renderBuilder() {
+        const fund = state.selectedFund;
+        const rows = document.getElementById("builderSetRows");
+        if (!rows) return;
+        if (!fund || !Array.isArray(fund.constituents) || fund.constituents.length === 0) {
+          rows.innerHTML = `<tr><td colspan="4" style="color:#6b7280;">No basket data available.</td></tr>`;
+          return;
+        }
+
+        const grouped = new Map();
+        for (const card of fund.constituents) {
+          const setName = String(card.setName || card.setId || "Unknown Set");
+          const contribution = Number(card.contribution || 0);
+          const price = Number(card.priceGBP || 0);
+          const weightedValue = price * (contribution / 100);
+          if (!grouped.has(setName)) {
+            grouped.set(setName, {
+              setName,
+              cards: 0,
+              contribution: 0,
+              weightedValue: 0,
+            });
+          }
+          const row = grouped.get(setName);
+          row.cards += 1;
+          row.contribution += contribution;
+          row.weightedValue += weightedValue;
+        }
+
+        const lines = Array.from(grouped.values()).sort(
+          (a, b) => b.contribution - a.contribution
+        );
+        const totalContribution = lines.reduce((sum, row) => sum + row.contribution, 0);
+        const totalWeightedValue = lines.reduce((sum, row) => sum + row.weightedValue, 0);
+
+        rows.innerHTML =
+          lines
+            .map(
+              (row) => `
+                <tr>
+                  <td>${row.setName}</td>
+                  <td>${row.cards}</td>
+                  <td>${row.contribution.toFixed(3)}%</td>
+                  <td>${fmtMoney(row.weightedValue)}</td>
+                </tr>
+              `
+            )
+            .join("") +
+          `
+            <tr>
+              <th>Total</th>
+              <th>${lines.reduce((sum, row) => sum + row.cards, 0)}</th>
+              <th>${totalContribution.toFixed(3)}%</th>
+              <th>${fmtMoney(totalWeightedValue)}</th>
+            </tr>
+          `;
+      }
+
+      async function loadSelectedFund() {
+        if (!state.selectedFundId) return;
+        const { fund } = await api.getFund(state.selectedFundId);
+        state.selectedFund = {
+          ...fund,
+          name: normalizeFundName(fund?.name),
+          description: normalizeDisplayText(fund?.description || ""),
+        };
+        renderConstituents();
+        drawChart();
+        drawHistoryPageChart();
+        renderExplorer();
+        renderBuilder();
+        renderFundStatus();
+      }
+
+      async function refreshAll(forceRefresh = false) {
+        let fundsPayload = null;
+        let portfolioData = null;
+
+        try {
+          fundsPayload = await api.getFunds(forceRefresh);
+          state.funds = (fundsPayload.funds || []).map((fund) => ({
+            ...fund,
+            name: normalizeFundName(fund?.name),
+            description: normalizeDisplayText(fund?.description || ""),
+          }));
+        } catch (err) {
+          state.funds = [];
+          throw new Error(`Failed to load funds: ${err.message}`);
+        }
+
+        try {
+          portfolioData = await api.getPortfolio();
+          state.portfolio = portfolioData;
+        } catch (_err) {
+          state.portfolio = {
+            cashGBP: 0,
+            holdingsValueGBP: 0,
+            totalValueGBP: 0,
+            netInvestedGBP: 0,
+            pnlGBP: 0,
+            pnlPct: 0,
+            positions: [],
+            transactions: [],
+          };
+          toast("Portfolio endpoint unavailable, showing funds only.", true);
+        }
+
+        const funds = state.funds;
+        if (!state.selectedFundId && funds.length) {
+          state.selectedFundId = funds[0].id;
+        }
+        if (state.selectedFundId && !funds.some((f) => f.id === state.selectedFundId)) {
+          state.selectedFundId = funds[0]?.id || null;
+        }
+        if (state.selectedFundId) {
+          await loadSelectedFund();
+        }
+        renderFunds();
+        renderPortfolio();
+        renderTopStats();
+      }
+
+      async function trade(type) {
+        const fundId = document.getElementById("tradeFund").value;
+        const amountGBP = Number(document.getElementById("tradeAmount").value);
+        if (!fundId || !amountGBP || amountGBP <= 0) {
+          toast("Enter a valid fund and amount.", true);
+          return;
+        }
+        try {
+          state.portfolio = await api.trade(type, { fundId, amountGBP });
+          renderPortfolio();
+          renderTopStats();
+          toast(`${type.toUpperCase()} executed successfully.`);
+        } catch (err) {
+          toast(err.message, true);
+        }
+      }
+
+      function bindFundSelector(id) {
+        const select = document.getElementById(id);
+        if (!select) return;
+        select.addEventListener("change", async (e) => {
+          const fundId = e.target.value;
+          if (!fundId) return;
+          state.selectedFundId = fundId;
+          await loadSelectedFund();
+          renderFunds();
+        });
+      }
+
+      function bindNavigation() {
+        for (const link of document.querySelectorAll("[data-page]")) {
+          link.addEventListener("click", (event) => {
+            event.preventDefault();
+            const page = link.getAttribute("data-page");
+            setActivePage(page);
+          });
+        }
+        window.addEventListener("hashchange", () => {
+          setActivePage(getPageFromHash(), false);
+        });
+      }
+
+      bindNavigation();
+      bindFundSelector("tradeFund");
+      bindFundSelector("explorerFund");
+      bindFundSelector("builderFund");
+      bindFundSelector("historyFund");
+
+      document.getElementById("buyBtn")?.addEventListener("click", () => trade("buy"));
+      document.getElementById("sellBtn")?.addEventListener("click", () => trade("sell"));
+      document.getElementById("chart")?.addEventListener("mousemove", handleChartHover);
+      document.getElementById("chart")?.addEventListener("mouseleave", hideChartTooltip);
+      document
+        .getElementById("historyChart")
+        ?.addEventListener("mousemove", handleHistoryChartHover);
+      document
+        .getElementById("historyChart")
+        ?.addEventListener("mouseleave", hideHistoryChartTooltip);
+      document.getElementById("refreshBtn")?.addEventListener("click", async () => {
+        await refreshAll(true);
+        toast("Data refreshed.");
+      });
+
+      document
+        .getElementById("openMarketplaceTradeBtn")
+        ?.addEventListener("click", () => setActivePage("marketplace"));
+
+      (async function init() {
+        try {
+          setActivePage(getPageFromHash(), false);
+          await refreshAll();
+        } catch (err) {
+          document.body.innerHTML = `<div style="padding:22px;font-family:Segoe UI,sans-serif;"><h2>Failed to load app</h2><p>${err.message}</p><p>Start backend with <code>node backend.js</code> and ensure internet access to Pokemon card data APIs.</p></div>`;
+        }
+      })();
+    </script>
+  </body>
+</html>
