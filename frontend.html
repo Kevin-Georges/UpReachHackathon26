@@ -746,6 +746,55 @@
     <div id="toast" class="toast"></div>
 
     <script>
+      const MOCK_FUNDS = {
+        funds: [
+          { id: "broad", name: "Broad Market Index", type: "broad", priceGBP: 142.50, dayChangePct: 1.23, description: "Diversified exposure across all eras" },
+          { id: "dp", name: "Diamond & Pearl Index", type: "era", priceGBP: 87.20, dayChangePct: -0.44, description: "Gen IV era cards" },
+          { id: "hgss", name: "HeartGold SoulSilver Index", type: "era", priceGBP: 210.00, dayChangePct: 2.10, description: "Gen IV remakes" }
+        ]
+      };
+      
+      const MOCK_FUND_DETAIL = (id) => ({
+        fund: {
+          ...MOCK_FUNDS.funds.find(f => f.id === id) || MOCK_FUNDS.funds[0],
+          history: Array.from({length: 30}, (_, i) => ({
+            date: new Date(Date.now() - (29-i)*86400000).toISOString().slice(0,10),
+            price: 100 + Math.random() * 50
+          })),
+          constituents: [
+            { name: "Charizard", number: "4", setName: "Base Set", rarity: "Holo Rare", priceGBP: 320, contribution: 22.5 },
+            { name: "Blastoise", number: "2", setName: "Base Set", rarity: "Holo Rare", priceGBP: 180, contribution: 12.7 },
+            { name: "Lugia", number: "9", setName: "Neo Genesis", rarity: "Holo Rare", priceGBP: 250, contribution: 17.6 },
+          ]
+        }
+      });
+      
+      const MOCK_PORTFOLIO = {
+        cashGBP: 1000, holdingsValueGBP: 500, totalValueGBP: 1500,
+        netInvestedGBP: 500, pnlGBP: 50, pnlPct: 10,
+        positions: [{ fundName: "Broad Market Index", units: 3.5, priceGBP: 142.50, marketValueGBP: 498.75 }],
+        transactions: []
+      };
+      
+      const _realFetch = window.fetch;
+      window.fetch = (url, opts) => {
+        if (url.startsWith("/api/funds/")) {
+          const id = url.split("/api/funds/")[1];
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(MOCK_FUND_DETAIL(id)) });
+        }
+        if (url === "/api/funds" || url === "/api/funds?refresh=1") {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(MOCK_FUNDS) });
+        }
+        if (url === "/api/portfolio") {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(MOCK_PORTFOLIO) });
+        }
+        if (url.includes("/api/portfolio/")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(MOCK_PORTFOLIO) });
+        }
+        return _realFetch(url, opts);
+      };
+      </script>
+    <script>
       const PAGE_KEYS = [
         "dashboard",
         "marketplace",
