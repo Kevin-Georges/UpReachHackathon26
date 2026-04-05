@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pokemon Index Fund App</title>
+    <title>Index Fund App</title>
     <style>
       :root {
         --bg: #dfdfdf;
@@ -347,6 +347,47 @@
         overflow: auto;
       }
 
+      .constituents.tall {
+        max-height: 420px;
+      }
+
+      .weight-bar-track {
+        width: min(140px, 28vw);
+        height: 14px;
+        border: 2px solid #000;
+        background: #fff;
+        box-shadow: 2px 2px 0 #000;
+      }
+
+      .weight-bar-fill {
+        height: 100%;
+        background: var(--red);
+        min-width: 0;
+      }
+
+      .live-refresh-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 14px;
+        margin: 0 0 14px;
+        padding: 10px 14px;
+        border: 3px solid var(--line);
+        background: #f5f5f5;
+        box-shadow: 3px 3px 0 #000;
+      }
+
+      .live-refresh-bar .muted-copy {
+        margin: 0;
+        flex: 1;
+        min-width: 200px;
+      }
+
+      button.ghost:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
       .toast {
         position: fixed;
         right: 16px;
@@ -441,9 +482,9 @@
         <section class="hero">
           <h1>Project Description</h1>
           <p class="sub">
-            This app is a Pokemon trading card index-fund prototype. It calculates a live index price by
-            combining card prices proportionally to each card’s basket contribution, and then lets you
-            explore history, basket composition, and paper-trade the index funds.
+            This app is a trading-card index-fund prototype (Pokemon, Magic: The Gathering, Yu-Gi-Oh!). It
+            calculates a live index price by combining card prices proportionally to each card’s basket
+            contribution, then lets you explore history, basket composition, and paper-trade the index funds.
           </p>
         </section>
 
@@ -451,8 +492,10 @@
           <h2 class="panel-title">How Pricing Works</h2>
           <div class="code-block">Index Price = Σ(card price × basket contribution % / 100)</div>
           <p class="muted-copy">
-            Prices are built from card-level market data and persisted in cache/history so graphs and index
-            views still work when live calls are temporarily unavailable.
+            With the Node backend running, prices come from the TCG API when <code>TCGAPI_KEY</code> is set.
+            The first load picks a basket via search, then <strong>locks card IDs and each row’s weight %</strong>.
+            Refresh only updates £ prices from the API; weight % columns stay fixed until you restart the server.
+            Index NAV and history use those frozen weights. Prices are rounded to 2p to reduce noise.
           </p>
         </section>
         <section class="panel">
@@ -463,8 +506,8 @@
             model to index-style exposure so users track a weighted basket instead of one collectible.
           </p>
           <p class="muted-copy">
-            The broad market index provides diversified exposure, while era-focused index funds let users target
-            specific periods such as Diamond and Pearl, Platinum, and HeartGold and SoulSilver.
+            Each index fund targets one major TCG: Pokemon, Magic: The Gathering, or Yu-Gi-Oh!, using
+            search once to build a basket, then stable card IDs with live price updates on refresh.
           </p>
         </section>
 
@@ -482,16 +525,23 @@
 
       <section class="app-page" id="page-dashboard">
         <section class="hero">
-          <h1>Pokemon Card Index Exchange</h1>
+          <h1>TCG Index Exchange</h1>
           <p class="sub">
-            Rarity + Nostalgia + Demand = Price. Invest in broad and era-focused
-            Pokemon card baskets without storing individual cards.
+            Rarity + Nostalgia + Demand = Price. Compare Pokemon, Magic: The Gathering, and Yu-Gi-Oh! index
+            baskets without storing individual cards.
           </p>
           <div class="row three" id="topStats"></div>
         </section>
 
         <section class="panel">
           <h2 class="panel-title">Market Snapshot</h2>
+          <div class="live-refresh-bar">
+            <button type="button" class="ghost" id="refreshLiveDashboardBtn">Refresh live prices</button>
+            <p class="muted-copy">
+              Re-fetches baskets from TCG API (uses <code>TCGAPI_KEY</code> on the server). Figures update when
+              market data changes.
+            </p>
+          </div>
           <div class="table-wrap">
             <table>
               <thead>
@@ -511,6 +561,14 @@
       <section class="app-page" id="page-marketplace">
         <section class="panel">
           <h2 class="panel-title">Index Marketplace</h2>
+          <div class="live-refresh-bar">
+            <button type="button" class="ghost" id="refreshLiveMarketplaceBtn">Refresh live prices</button>
+            <p class="muted-copy">
+              Pulls the latest card prices from TCG API via your backend and rebuilds every index basket.
+              Charts and history only move when the rebuilt index level or calendar day actually changes.
+            </p>
+          </div>
+          <p class="muted-copy" id="fundsLastUpdatedLine" style="margin: 0 0 12px; line-height: 1.35"></p>
           <div class="table-wrap">
             <table>
               <thead>
@@ -546,6 +604,24 @@
                 <tbody id="constituentsRows"></tbody>
               </table>
             </div>
+            <h3 class="panel-subtitle">How each card is weighted</h3>
+            <p class="muted-copy">
+              Weight % is each card’s share of the basket by value (price × weight sums to the index level). The
+              bar scales to the largest weight in the list so you can compare cards at a glance.
+            </p>
+            <div class="table-wrap constituents tall">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Card</th>
+                    <th>Weight %</th>
+                    <th>£ weight in index</th>
+                    <th>Relative size</th>
+                  </tr>
+                </thead>
+                <tbody id="marketplaceWeightRows"></tbody>
+              </table>
+            </div>
           </section>
 
           <section class="panel">
@@ -562,7 +638,9 @@
               <div class="button-row">
                 <button class="buy" id="buyBtn">Buy</button>
                 <button class="sell" id="sellBtn">Sell</button>
-                <button class="ghost" id="refreshBtn">Refresh</button>
+                <button class="ghost" id="refreshBtn" title="Re-fetch from TCG API (same as Refresh live prices)">
+                  Refresh live
+                </button>
               </div>
             </div>
             <div class="table-wrap">
@@ -591,6 +669,10 @@
       <section class="app-page" id="page-fund-explorer">
         <section class="panel">
           <h2 class="panel-title">Fund Explorer</h2>
+          <div class="live-refresh-bar">
+            <button type="button" class="ghost" id="refreshLiveExplorerBtn">Refresh live prices</button>
+            <p class="muted-copy">Same as marketplace refresh: new TCG API data and updated weights.</p>
+          </div>
           <div class="controls">
             <label>
               Fund
@@ -602,6 +684,25 @@
               <tbody id="explorerMetaRows"></tbody>
             </table>
           </div>
+          <h3 class="panel-subtitle">Card weight breakdown</h3>
+          <p class="muted-copy">
+            “£ weight in index” is price × weight % — the amount that card contributes to the index price. All
+            rows together should add up to the fund’s index level (for the full basket).
+          </p>
+          <div class="table-wrap constituents tall">
+            <table>
+              <thead>
+                <tr>
+                  <th>Card</th>
+                  <th>Weight %</th>
+                  <th>£ weight in index</th>
+                  <th>Relative size</th>
+                </tr>
+              </thead>
+              <tbody id="explorerWeightRows"></tbody>
+            </table>
+          </div>
+          <h3 class="panel-subtitle">Full basket</h3>
           <div class="table-wrap constituents">
             <table>
               <thead>
@@ -622,8 +723,8 @@
         <section class="hero">
           <h1>Project Overview</h1>
           <p class="sub">
-            This app is a Pokemon card index-fund prototype. It tracks market movement by aggregating
-            card prices into weighted baskets and exposing each basket as a single index price.
+            This app is a multi-game TCG index-fund prototype. It tracks market movement by aggregating card
+            prices into weighted baskets (one per game) and exposing each basket as a single index price.
           </p>
         </section>
 
@@ -746,55 +847,6 @@
     <div id="toast" class="toast"></div>
 
     <script>
-      const MOCK_FUNDS = {
-        funds: [
-          { id: "broad", name: "Broad Market Index", type: "broad", priceGBP: 142.50, dayChangePct: 1.23, description: "Diversified exposure across all eras" },
-          { id: "dp", name: "Diamond & Pearl Index", type: "era", priceGBP: 87.20, dayChangePct: -0.44, description: "Gen IV era cards" },
-          { id: "hgss", name: "HeartGold SoulSilver Index", type: "era", priceGBP: 210.00, dayChangePct: 2.10, description: "Gen IV remakes" }
-        ]
-      };
-      
-      const MOCK_FUND_DETAIL = (id) => ({
-        fund: {
-          ...MOCK_FUNDS.funds.find(f => f.id === id) || MOCK_FUNDS.funds[0],
-          history: Array.from({length: 30}, (_, i) => ({
-            date: new Date(Date.now() - (29-i)*86400000).toISOString().slice(0,10),
-            price: 100 + Math.random() * 50
-          })),
-          constituents: [
-            { name: "Charizard", number: "4", setName: "Base Set", rarity: "Holo Rare", priceGBP: 320, contribution: 22.5 },
-            { name: "Blastoise", number: "2", setName: "Base Set", rarity: "Holo Rare", priceGBP: 180, contribution: 12.7 },
-            { name: "Lugia", number: "9", setName: "Neo Genesis", rarity: "Holo Rare", priceGBP: 250, contribution: 17.6 },
-          ]
-        }
-      });
-      
-      const MOCK_PORTFOLIO = {
-        cashGBP: 1000, holdingsValueGBP: 500, totalValueGBP: 1500,
-        netInvestedGBP: 500, pnlGBP: 50, pnlPct: 10,
-        positions: [{ fundName: "Broad Market Index", units: 3.5, priceGBP: 142.50, marketValueGBP: 498.75 }],
-        transactions: []
-      };
-      
-      const _realFetch = window.fetch;
-      window.fetch = (url, opts) => {
-        if (url.startsWith("/api/funds/")) {
-          const id = url.split("/api/funds/")[1];
-          return Promise.resolve({ ok: true, json: () => Promise.resolve(MOCK_FUND_DETAIL(id)) });
-        }
-        if (url === "/api/funds" || url === "/api/funds?refresh=1") {
-          return Promise.resolve({ ok: true, json: () => Promise.resolve(MOCK_FUNDS) });
-        }
-        if (url === "/api/portfolio") {
-          return Promise.resolve({ ok: true, json: () => Promise.resolve(MOCK_PORTFOLIO) });
-        }
-        if (url.includes("/api/portfolio/")) {
-          return Promise.resolve({ ok: true, json: () => Promise.resolve(MOCK_PORTFOLIO) });
-        }
-        return _realFetch(url, opts);
-      };
-      </script>
-    <script>
       const PAGE_KEYS = [
         "dashboard",
         "marketplace",
@@ -807,6 +859,50 @@
       ];
       const DEFAULT_PAGE = "marketplace";
 
+      /** Preferred API base before we discover a working one (same-origin on :3847, else points at Node). */
+      function resolveApiBase() {
+        try {
+          const q = new URLSearchParams(window.location.search).get("api");
+          if (q) return q.replace(/\/$/, "");
+        } catch (_e) {}
+        const { protocol, hostname, port } = window.location;
+        if (protocol === "file:") return "http://127.0.0.1:3847";
+        const p = String(port || "");
+        if (p === "3847") return "";
+        if (hostname === "localhost" || hostname === "127.0.0.1") {
+          if (p === "" || p === "80" || p === "8080" || p === "443") return "http://127.0.0.1:3847";
+        }
+        return "";
+      }
+
+      function collectApiBases() {
+        const list = [];
+        const seen = new Set();
+        const push = (b) => {
+          const v = b == null ? "" : String(b).replace(/\/$/, "");
+          if (seen.has(v)) return;
+          seen.add(v);
+          list.push(v);
+        };
+        try {
+          const q = new URLSearchParams(window.location.search).get("api");
+          if (q) push(q.trim());
+        } catch (_e) {}
+        push(resolveApiBase());
+        push("");
+        push("http://127.0.0.1:3847");
+        push("http://localhost:3847");
+        return list;
+      }
+
+      function abortAfter(ms) {
+        const c = new AbortController();
+        const t = setTimeout(() => c.abort(), ms);
+        return { signal: c.signal, clear: () => clearTimeout(t) };
+      }
+
+      let __apiBase = null;
+
       const state = {
         funds: [],
         selectedFundId: null,
@@ -815,34 +911,81 @@
         chartPoints: [],
         historyChartPoints: [],
         activePage: DEFAULT_PAGE,
+        /** ISO timestamp from server `GET /api/funds` when connected to backend */
+        lastFundsUpdated: null,
       };
 
       const api = {
+        resetConnection() {
+          __apiBase = null;
+        },
+        async _ensureBackendPath(path, init = {}) {
+          if (__apiBase === null) throw new Error("No API base");
+          const res = await fetch(`${__apiBase}${path}`, init);
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            const detail = data.error || data.message || res.statusText;
+            throw new Error(`HTTP ${res.status}: ${detail}`);
+          }
+          return data;
+        },
         async getFunds(forceRefresh = false) {
+          if (forceRefresh && __apiBase !== null) {
+            try {
+              return await this._ensureBackendPath(`/api/funds?refresh=1`);
+            } catch (_e) {
+              this.resetConnection();
+            }
+          } else if (forceRefresh) {
+            this.resetConnection();
+          }
+
           const qs = forceRefresh ? "?refresh=1" : "";
-          const res = await fetch(`/api/funds${qs}`);
-          if (!res.ok) throw new Error("Failed to load funds");
-          return res.json();
+          const path = `/api/funds${qs}`;
+          if (__apiBase !== null) {
+            try {
+              return await this._ensureBackendPath(path);
+            } catch (_e) {
+              this.resetConnection();
+            }
+          }
+          const errors = [];
+          for (const base of collectApiBases()) {
+            const { signal, clear } = abortAfter(8000);
+            try {
+              const res = await fetch(`${base}${path}`, { signal });
+              clear();
+              const data = await res.json().catch(() => ({}));
+              if (res.ok) {
+                __apiBase = base;
+                return data;
+              }
+              errors.push(`${base || "(same origin)"}: HTTP ${res.status} ${data.error || res.statusText}`);
+            } catch (e) {
+              clear();
+              errors.push(`${base || "(same origin)"}: ${e.message || "failed"}`);
+            }
+          }
+          __apiBase = null;
+          throw new Error(
+            `Cannot load funds from the API. ${errors[0] || "Check that node backend.js is running and TCGAPI_KEY is set."}`
+          );
         },
         async getFund(id) {
-          const res = await fetch(`/api/funds/${id}`);
-          if (!res.ok) throw new Error("Failed to load fund");
-          return res.json();
+          if (__apiBase === null) await this.getFunds(false);
+          return this._ensureBackendPath(`/api/funds/${encodeURIComponent(id)}`);
         },
         async getPortfolio() {
-          const res = await fetch("/api/portfolio");
-          if (!res.ok) throw new Error("Failed to load portfolio");
-          return res.json();
+          if (__apiBase === null) await this.getFunds(false);
+          return this._ensureBackendPath("/api/portfolio");
         },
         async trade(type, payload) {
-          const res = await fetch(`/api/portfolio/${type}`, {
+          if (__apiBase === null) await this.getFunds(false);
+          return this._ensureBackendPath(`/api/portfolio/${encodeURIComponent(type)}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload),
           });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || "Trade failed");
-          return data;
         },
       };
 
@@ -988,6 +1131,21 @@
         setFundSelectOptions(["tradeFund", "explorerFund", "builderFund", "historyFund"]);
       }
 
+      function renderFundsLastUpdatedLine() {
+        const el = document.getElementById("fundsLastUpdatedLine");
+        if (!el) return;
+        if (!state.lastFundsUpdated) {
+          el.textContent = "";
+          return;
+        }
+        const d = new Date(state.lastFundsUpdated);
+        if (Number.isNaN(d.getTime())) {
+          el.textContent = "";
+          return;
+        }
+        el.textContent = `Last rebuilt on server: ${d.toLocaleString()}`;
+      }
+
       function renderPortfolio() {
         const p = state.portfolio;
         if (!p) return;
@@ -1056,12 +1214,60 @@
         }
       }
 
+      function cardWeightShareGBP(c) {
+        const price = Number(c.priceGBP || 0);
+        const w = Number(c.contribution || 0);
+        return price * (w / 100);
+      }
+
+      function renderCardWeightsTable(tbodyId, fund, limit = 60) {
+        const tbody = document.getElementById(tbodyId);
+        if (!tbody) return;
+        if (!fund || !Array.isArray(fund.constituents) || fund.constituents.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="4" style="color:#6b7280;">No basket data.</td></tr>`;
+          return;
+        }
+        const slice = fund.constituents.slice(0, limit);
+        const maxW = Math.max(...slice.map((c) => Number(c.contribution) || 0), 0.001);
+        let sumPct = 0;
+        let sumGbp = 0;
+        const lines = slice.map((c) => {
+          const pct = Number(c.contribution) || 0;
+          const gbp = cardWeightShareGBP(c);
+          sumPct += pct;
+          sumGbp += gbp;
+          const barPct = Math.min(100, (pct / maxW) * 100);
+          return `
+            <tr>
+              <td>${c.name} #${c.number}</td>
+              <td>${pct.toFixed(3)}%</td>
+              <td>${fmtMoney(gbp)}</td>
+              <td>
+                <div class="weight-bar-track" title="${pct.toFixed(3)}% of basket">
+                  <div class="weight-bar-fill" style="width:${barPct}%;"></div>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+        const subtotalRow = `
+          <tr>
+            <th>Subtotal (${slice.length} cards shown)</th>
+            <td>${sumPct.toFixed(3)}%</td>
+            <td>${fmtMoney(sumGbp)}</td>
+            <td></td>
+          </tr>
+        `;
+        tbody.innerHTML = lines.join("") + subtotalRow;
+      }
+
       function renderConstituents() {
         const fund = state.selectedFund;
         const rows = document.getElementById("constituentsRows");
         if (!rows) return;
         if (!fund || !Array.isArray(fund.constituents)) {
           rows.innerHTML = "";
+          renderCardWeightsTable("marketplaceWeightRows", null, 60);
           return;
         }
         rows.innerHTML = fund.constituents
@@ -1078,6 +1284,7 @@
           `
           )
           .join("");
+        renderCardWeightsTable("marketplaceWeightRows", fund, 60);
       }
 
       function renderFundStatus() {
@@ -1336,9 +1543,13 @@
         if (!fund) {
           metaRows.innerHTML = "";
           rows.innerHTML = "";
+          renderCardWeightsTable("explorerWeightRows", null, 120);
           return;
         }
 
+        const rebuilt = state.lastFundsUpdated
+          ? new Date(state.lastFundsUpdated).toLocaleString()
+          : "—";
         metaRows.innerHTML = `
           <tr><th>Name</th><td>${normalizeFundName(fund.name)}</td></tr>
           <tr><th>Type</th><td>${String(fund.type || "").toUpperCase()}</td></tr>
@@ -1348,7 +1559,10 @@
         )}</td></tr>
           <tr><th>Cards</th><td>${Array.isArray(fund.constituents) ? fund.constituents.length : 0}</td></tr>
           <tr><th>History Points</th><td>${getFundSeries(fund).length}</td></tr>
+          <tr><th>Last rebuilt (server)</th><td>${rebuilt}</td></tr>
         `;
+
+        renderCardWeightsTable("explorerWeightRows", fund, 120);
 
         rows.innerHTML = (Array.isArray(fund.constituents) ? fund.constituents : [])
           .slice(0, 120)
@@ -1425,7 +1639,12 @@
 
       async function loadSelectedFund() {
         if (!state.selectedFundId) return;
-        const { fund } = await api.getFund(state.selectedFundId);
+        const res = await api.getFund(state.selectedFundId);
+        const fund = res.fund != null ? res.fund : res;
+        if (res.lastUpdated) {
+          state.lastFundsUpdated = res.lastUpdated;
+          renderFundsLastUpdatedLine();
+        }
         state.selectedFund = {
           ...fund,
           name: normalizeFundName(fund?.name),
@@ -1450,9 +1669,13 @@
             name: normalizeFundName(fund?.name),
             description: normalizeDisplayText(fund?.description || ""),
           }));
+          state.lastFundsUpdated = fundsPayload.lastUpdated ?? null;
         } catch (err) {
           state.funds = [];
-          throw new Error(`Failed to load funds: ${err.message}`);
+          state.lastFundsUpdated = null;
+          state.selectedFundId = null;
+          state.selectedFund = null;
+          throw err;
         }
 
         try {
@@ -1480,11 +1703,17 @@
           state.selectedFundId = funds[0]?.id || null;
         }
         if (state.selectedFundId) {
-          await loadSelectedFund();
+          try {
+            await loadSelectedFund();
+          } catch (e) {
+            toast(String(e.message || e), true);
+            state.selectedFund = null;
+          }
         }
         renderFunds();
         renderPortfolio();
         renderTopStats();
+        renderFundsLastUpdatedLine();
       }
 
       async function trade(type) {
@@ -1529,6 +1758,33 @@
         });
       }
 
+      const LIVE_REFRESH_BTN_IDS = [
+        "refreshBtn",
+        "refreshLiveMarketplaceBtn",
+        "refreshLiveDashboardBtn",
+        "refreshLiveExplorerBtn",
+      ];
+
+      function setLiveRefreshBusy(busy) {
+        for (const id of LIVE_REFRESH_BTN_IDS) {
+          const el = document.getElementById(id);
+          if (el) el.disabled = !!busy;
+        }
+      }
+
+      async function refreshLiveFromTcgApi() {
+        setLiveRefreshBusy(true);
+        toast("Fetching latest prices from TCG API (via backend)…");
+        try {
+          await refreshAll(true);
+          toast("Live prices updated from API.");
+        } catch (err) {
+          toast(err.message || "Refresh failed", true);
+        } finally {
+          setLiveRefreshBusy(false);
+        }
+      }
+
       bindNavigation();
       bindFundSelector("tradeFund");
       bindFundSelector("explorerFund");
@@ -1545,10 +1801,9 @@
       document
         .getElementById("historyChart")
         ?.addEventListener("mouseleave", hideHistoryChartTooltip);
-      document.getElementById("refreshBtn")?.addEventListener("click", async () => {
-        await refreshAll(true);
-        toast("Data refreshed.");
-      });
+      for (const id of LIVE_REFRESH_BTN_IDS) {
+        document.getElementById(id)?.addEventListener("click", () => refreshLiveFromTcgApi());
+      }
 
       document
         .getElementById("openMarketplaceTradeBtn")
@@ -1559,7 +1814,7 @@
           setActivePage(getPageFromHash(), false);
           await refreshAll();
         } catch (err) {
-          document.body.innerHTML = `<div style="padding:22px;font-family:Segoe UI,sans-serif;"><h2>Failed to load app</h2><p>${err.message}</p><p>Start backend with <code>node backend.js</code> and ensure internet access to Pokemon card data APIs.</p></div>`;
+          document.body.innerHTML = `<div style="padding:22px;font-family:Segoe UI,sans-serif;max-width:640px;"><h2>Failed to load app</h2><p>${err.message}</p><p>Run <code>node backend.js</code>, set <code>TCGAPI_KEY</code> in <code>.env</code>, open <code>http://localhost:3847/</code> (or add <code>?api=http://127.0.0.1:3847</code> if you use XAMPP). There is no offline placeholder data.</p></div>`;
         }
       })();
     </script>
