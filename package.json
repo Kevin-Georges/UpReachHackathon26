@@ -1,7 +1,7 @@
 {
   "name": "upreach-pokemon-index",
   "private": true,
-  "description": "Local backend: Pokemon TCG API -> index fund JSON for frontend.html",
+  "description": "Local backend: Pokemon TCG API -> index fund JSON for frontend app",
   "main": "backend.js",
   "scripts": {
     "start": "node backend.js",

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Trading card game">
+  <defs>
+    <linearGradient id="mtgFrame" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3d2817"/>
+      <stop offset="100%" stop-color="#120c08"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="url(#mtgFrame)"/>
+  <rect x="9" y="11" width="46" height="42" rx="5" fill="none" stroke="#b8860b" stroke-width="2"/>
+  <path fill="#e8dcc4" d="M18 44V20h7l7 16 7-16h7v24h-6V28l-8 18h-4L24 28v16z"/>
+</svg>

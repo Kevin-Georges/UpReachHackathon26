@@ -1,0 +1,354 @@
+:root {
+  --bg: #dfdfdf;
+  --ink: #050505;
+  --muted: #4b5563;
+  --line: #000;
+  --white: #fff;
+  --accent: #779DFF; /* Your new blue highlight color */
+  --green: #0f8d3f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: "Arial Black", "Franklin Gothic Medium", "Segoe UI", sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+}
+
+.top-nav {
+  width: 100%;
+  border-bottom: 3px solid var(--line);
+  background: #efefef;
+}
+
+.top-nav-inner {
+  width: min(1520px, 98vw);
+  margin: 0 auto;
+  padding: 10px 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+}
+
+/* Generic Brand Logo replacing the Pokeball */
+.brand-logo {
+  min-width: 40px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.brand-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.brand-logo:hover {
+  transform: scale(1.1);
+}
+
+/* TCG Icons for the table rows */
+.game-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
+.nav-pill {
+  border: 3px solid #000;
+  border-radius: 10px;
+  background: #fff;
+  color: #000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 9px 12px;
+  white-space: nowrap;
+  box-shadow: 0 3px 0 #000;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+/* Hover and Active states using the new blue */
+.nav-pill:hover {
+  background: #f0f0f0;
+}
+
+.nav-pill.active {
+  background: var(--accent);
+  color: #000; /* Black text usually looks better on this blue */
+}
+
+.container {
+  width: min(1480px, 98vw);
+  margin: 28px auto 64px;
+}
+
+.app-page {
+  display: none;
+}
+
+.app-page.active {
+  display: block;
+}
+
+.muted-copy {
+  margin: 12px 14px 0;
+  color: var(--muted);
+  font-family: "Segoe UI", sans-serif;
+  font-weight: 700;
+}
+
+.code-block {
+  margin: 14px;
+  padding: 14px;
+  border: 3px solid #000;
+  background: #fff;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: pre-wrap;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 20px;
+  animation: fadeInUp 0.42s ease;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.35rem);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-shadow: 4px 4px 0 #0f172a2b;
+}
+
+.sub {
+  margin: 12px auto 0;
+  color: #111827;
+  font-family: "Segoe UI", sans-serif;
+  max-width: 760px;
+  font-size: clamp(1rem, 1.6vw, 1.25rem);
+  font-weight: 700;
+}
+
+.row {
+  display: grid;
+  gap: 12px;
+}
+
+.row.three {
+  margin-top: 24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.panel {
+  margin-top: 20px;
+  border: 3px solid var(--line);
+  background: #ededed;
+  box-shadow: 4px 4px 0 #000;
+  overflow: hidden;
+  animation: fadeInUp 0.45s ease;
+}
+
+.panel-title {
+  margin: 0;
+  padding: 14px 18px;
+  border-bottom: 3px solid var(--line);
+  font-size: 1.8rem;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.panel-subtitle {
+  margin: 0;
+  padding: 10px 18px;
+  border-bottom: 3px solid var(--line);
+  font-size: 1.18rem;
+  text-transform: uppercase;
+}
+
+.stat-card {
+  border: 3px solid #000;
+  background: #f8f8f8;
+  padding: 14px;
+  box-shadow: 3px 3px 0 #000;
+}
+
+.stat-label {
+  color: #111827;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  margin-top: 8px;
+  font-size: clamp(1.15rem, 2vw, 1.5rem);
+  font-family: "Segoe UI", sans-serif;
+  font-weight: 800;
+}
+
+.good {
+  color: var(--green);
+}
+
+.bad {
+  color: #c41212;
+}
+
+.table-wrap {
+  overflow-x: visible;
+  overflow-y: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+thead th {
+  background: #060606;
+  color: #fff;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 12px 14px;
+  border-bottom: 2px solid #111827;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 0.9rem;
+  font-family: "Segoe UI", sans-serif;
+  font-weight: 700;
+}
+
+th {
+  text-transform: uppercase;
+}
+
+tr:hover td {
+  background: #f6f6f6;
+}
+
+/* Active fund highlight updated to Blue */
+tr.selected-fund {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 1.6fr 1.1fr;
+  gap: 20px;
+}
+
+.controls {
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+  border-bottom: 3px solid #000;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.86rem;
+  text-transform: uppercase;
+}
+
+select,
+input {
+  border: 3px solid #000;
+  padding: 10px 12px;
+  font-size: 0.93rem;
+  background: #fff;
+  font-family: "Segoe UI", sans-serif;
+  font-weight: 700;
+}
+
+.button-row {
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  cursor: pointer;
+  border: 3px solid #000;
+  padding: 10px 14px;
+  font-weight: 900;
+  font-size: 0.86rem;
+  text-transform: uppercase;
+  box-shadow: 2px 2px 0 #000;
+}
+
+.buy {
+  background: #000;
+  color: #fff;
+}
+
+.sell {
+  background: #fff;
+  color: #000;
+}
+
+.ghost {
+  background: var(--accent);
+  color: #000;
+}
+
+.chart-wrap {
+  position: relative;
+  padding: 14px;
+  border-bottom: 3px solid #000;
+}
+
+canvas {
+  width: 100%;
+  height: 280px;
+  background: #fff;
+  border: 3px solid #000;
+}
+
+.constituents {
+  max-height: 340px;
+  overflow: auto;
+}
+
+.weight-bar-track {
+  width: min(140px, 28vw);
+  height: 14px;
+  border: 2px solid #000;
+  background: #fff;
+  box-shadow: 2px 2px 0 #000;
+}
+
+/* Weight bar fill updated to Blue */
+.weight-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  min-width: 0;
+}
+
