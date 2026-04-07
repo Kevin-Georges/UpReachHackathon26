@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Trading card game">
+  <rect width="64" height="64" rx="12" fill="#070a12"/>
+  <path fill="none" stroke="#d4af37" stroke-width="2.2" d="M32 11 L52 49 H12 Z"/>
+  <circle cx="32" cy="34" r="7" fill="none" stroke="#d4af37" stroke-width="1.6"/>
+  <path stroke="#d4af37" stroke-width="1.4" d="M32 27v14M25 34h14"/>
+</svg>

@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Index Fund App</title>
+    <link rel="stylesheet" href="/frontend/styles.css" />
+  </head>
+  <body>
+    <header class="top-nav">
+      <div class="top-nav-inner">
+        <a class="brand-logo" data-page="marketplace" href="#marketplace">
+          <img src="/assets/cardex.svg" alt="Cardex">
+       </a>
+        <a class="nav-pill" data-page="dashboard" href="#dashboard">Dashboard</a>
+        <a class="nav-pill" data-page="marketplace" href="#marketplace">Index Marketplace</a>
+        <a class="nav-pill" data-page="fund-explorer" href="#fund-explorer">Fund Explorer</a>
+        <a class="nav-pill" data-page="era-funds" href="#era-funds">Description</a>
+        <a class="nav-pill" data-page="basket-builder" href="#basket-builder">Basket Builder</a>
+        <a class="nav-pill" data-page="price-history" href="#price-history">Price History</a>
+        <a class="nav-pill" data-page="paper-trading" href="#paper-trading">Paper Trading</a>
+        <a class="nav-pill" data-page="portfolio" href="#portfolio">Portfolio</a>
+      </div>
+    </header>
+
+    <div class="container">
+      <section class="app-page" id="page-description">
+        <section class="hero">
+          <h1>Project Description</h1>
+          <p class="sub">
+            This app is a trading-card index-fund prototype (Pokemon, Magic: The Gathering, Yu-Gi-Oh!). It
+            calculates a live index price by combining card prices proportionally to each card’s basket
+            contribution, then lets you explore history, basket composition, and paper-trade the index funds.
+          </p>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">How Pricing Works</h2>
+          <div class="code-block">Index Price = Σ(card price × basket contribution % / 100)</div>
+          <p class="muted-copy">
+            With the Node backend running, prices come from the TCG API when <code>TCGAPI_KEY</code> is set.
+            The first load picks a basket via search, then <strong>locks card IDs and each row’s weight %</strong>.
+            Refresh only updates £ prices from the API; weight % columns stay fixed until you restart the server.
+            Index NAV and history use those frozen weights. Prices are rounded to 2p to reduce noise.
+          </p>
+        </section>
+        <section class="panel">
+          <h2 class="panel-title">What This Solves</h2>
+          <p class="muted-copy">
+            Most card investing is concentrated and operationally heavy. You need to choose individual cards,
+            manage storage, and accept single-card risk if one position underperforms. This project shifts that
+            model to index-style exposure so users track a weighted basket instead of one collectible.
+          </p>
+          <p class="muted-copy">
+            Each index fund targets one major TCG: Pokemon, Magic: The Gathering, or Yu-Gi-Oh!, using
+            search once to build a basket, then stable card IDs with live price updates on refresh.
+          </p>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">How To Use The App</h2>
+          <p class="muted-copy">
+            1. Open Index Marketplace to compare index funds.
+            2. Select a fund to inspect history and constituents.
+            3. Use Basket Builder to see set-level contribution and weighted value.
+            4. Use Paper Trading to simulate buy and sell actions.
+            5. Use Data Cache to validate cache and database status.
+          </p>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-dashboard">
+        <section class="hero">
+          <h1>TCG Index Exchange</h1>
+          <p class="sub">
+            Rarity + Nostalgia + Demand = Price. Compare Pokemon, Magic: The Gathering, and Yu-Gi-Oh! index
+            baskets without storing individual cards.
+          </p>
+          <div class="row three" id="topStats"></div>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">Market Snapshot</h2>
+          <div class="live-refresh-bar">
+            <button type="button" class="ghost" id="refreshLiveDashboardBtn">Refresh live prices</button>
+            <p class="muted-copy">
+              Re-fetches baskets from TCG API (uses <code>TCGAPI_KEY</code> on the server). Figures update when
+              market data changes.
+            </p>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fund</th>
+                  <th>Type</th>
+                  <th>Index Price (GBP)</th>
+                  <th>Daily Change</th>
+                </tr>
+              </thead>
+              <tbody id="dashboardFundRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-marketplace">
+        <section class="panel">
+          <h2 class="panel-title">Index Marketplace</h2>
+          <div class="live-refresh-bar">
+            <button type="button" class="ghost" id="refreshLiveMarketplaceBtn">Refresh live prices</button>
+            <p class="muted-copy">
+              Pulls the latest card prices from TCG API via your backend and rebuilds every index basket.
+              Charts and history only move when the rebuilt index level or calendar day actually changes.
+            </p>
+          </div>
+          <p class="muted-copy" id="fundsLastUpdatedLine" style="margin: 0 0 12px; line-height: 1.35"></p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fund</th>
+                  <th>Type</th>
+                  <th>Index Price (GBP)</th>
+                  <th>Daily Change</th>
+                </tr>
+              </thead>
+              <tbody id="fundRows"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="split">
+          <section class="panel">
+            <h2 class="panel-title">Selected Fund Detail</h2>
+            <div class="chart-wrap">
+              <canvas id="chart" width="920" height="280"></canvas>
+            </div>
+            <div class="table-wrap constituents">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Card</th>
+                    <th>Set</th>
+                    <th>Rarity</th>
+                    <th>Price (GBP)</th>
+                    <th>Basket Contribution %</th>
+                  </tr>
+                </thead>
+                <tbody id="constituentsRows"></tbody>
+              </table>
+            </div>
+            <h3 class="panel-subtitle">How each card is weighted</h3>
+            <p class="muted-copy">
+              Weight % is each card’s share of the basket by value (price × weight sums to the index level). The
+              bar scales to the largest weight in the list so you can compare cards at a glance.
+            </p>
+            <div class="table-wrap constituents tall">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Card</th>
+                    <th>Weight %</th>
+                    <th>£ weight in index</th>
+                    <th>Relative size</th>
+                  </tr>
+                </thead>
+                <tbody id="marketplaceWeightRows"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h2 class="panel-title">Paper Trading</h2>
+            <div class="controls">
+              <label>
+                Fund
+                <select id="tradeFund"></select>
+              </label>
+              <label>
+                Amount (GBP)
+                <input id="tradeAmount" type="number" min="1" value="250" />
+              </label>
+              <div class="button-row">
+                <button class="buy" id="buyBtn">Buy</button>
+                <button class="sell" id="sellBtn">Sell</button>
+                <button class="ghost" id="refreshBtn" title="Re-fetch from TCG API (same as Refresh live prices)">
+                  Refresh live
+                </button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <tbody id="portfolioStats"></tbody>
+              </table>
+            </div>
+            <h2 class="panel-title">Holdings</h2>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fund</th>
+                    <th>Units</th>
+                    <th>Price</th>
+                    <th>Market Value (GBP)</th>
+                  </tr>
+                </thead>
+                <tbody id="positionsRows"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-fund-explorer">
+        <section class="panel">
+          <h2 class="panel-title">Fund Explorer</h2>
+          <div class="live-refresh-bar">
+            <button type="button" class="ghost" id="refreshLiveExplorerBtn">Refresh live prices</button>
+            <p class="muted-copy">Same as marketplace refresh: new TCG API data and updated weights.</p>
+          </div>
+          <div class="controls">
+            <label>
+              Fund
+              <select id="explorerFund"></select>
+            </label>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <tbody id="explorerMetaRows"></tbody>
+            </table>
+          </div>
+          <h3 class="panel-subtitle">Card weight breakdown</h3>
+          <p class="muted-copy">
+            “£ weight in index” is price × weight % — the amount that card contributes to the index price. All
+            rows together should add up to the fund’s index level (for the full basket).
+          </p>
+          <div class="table-wrap constituents tall">
+            <table>
+              <thead>
+                <tr>
+                  <th>Card</th>
+                  <th>Weight %</th>
+                  <th>£ weight in index</th>
+                  <th>Relative size</th>
+                </tr>
+              </thead>
+              <tbody id="explorerWeightRows"></tbody>
+            </table>
+          </div>
+          <h3 class="panel-subtitle">Full basket</h3>
+          <div class="table-wrap constituents">
+            <table>
+              <thead>
+                <tr>
+                  <th>Card</th>
+                  <th>Set</th>
+                  <th>Price (GBP)</th>
+                  <th>Contribution</th>
+                </tr>
+              </thead>
+              <tbody id="explorerConstituentsRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-era-funds">
+        <section class="hero">
+          <h1>Project Overview</h1>
+          <p class="sub">
+            This app is a multi-game TCG index-fund prototype. It tracks market movement by aggregating card
+            prices into weighted baskets (one per game) and exposing each basket as a single index price.
+          </p>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">How The Index Works</h2>
+          <div class="code-block">Index Price = sum(card price * basket contribution % / 100)</div>
+          <p class="muted-copy">
+            Each card contributes according to its basket weight. This gives diversified exposure across
+            multiple cards and sets, rather than relying on one collectible.
+          </p>
+        </section>
+
+        <section class="panel">
+          <h2 class="panel-title">What You Can Do</h2>
+          <p class="muted-copy">
+            1. Compare index funds in Index Marketplace.
+            2. Inspect card-level composition in Fund Explorer.
+            3. Review set-level weighting in Basket Builder.
+            4. Analyze trends in Price History.
+            5. Simulate trades in Paper Trading and monitor results in Portfolio.
+          </p>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-basket-builder">
+        <section class="panel">
+          <h2 class="panel-title">Basket Builder</h2>
+          <div class="controls">
+            <label>
+              Fund
+              <select id="builderFund"></select>
+            </label>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Set</th>
+                  <th>Cards</th>
+                  <th>Contribution %</th>
+                  <th>Weighted Value (GBP)</th>
+                </tr>
+              </thead>
+              <tbody id="builderSetRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-price-history">
+        <section class="panel">
+          <h2 class="panel-title">Price History</h2>
+          <div class="controls">
+            <label>
+              Fund
+              <select id="historyFund"></select>
+            </label>
+          </div>
+          <div class="chart-wrap">
+            <canvas id="historyChart" width="920" height="280"></canvas>
+          </div>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-paper-trading">
+        <section class="panel">
+          <h2 class="panel-title">Paper Trading Activity</h2>
+          <p class="muted-copy">
+            Use buy and sell on the Index Marketplace page. This page tracks your latest paper trades.
+          </p>
+          <div class="controls">
+            <div class="button-row">
+              <button class="ghost" id="openMarketplaceTradeBtn">Open Trading Panel</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Type</th>
+                  <th>Fund</th>
+                  <th>Amount (GBP)</th>
+                  <th>Units</th>
+                  <th>Price</th>
+                </tr>
+              </thead>
+              <tbody id="tradeHistoryRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="app-page" id="page-portfolio">
+        <section class="panel">
+          <h2 class="panel-title">Portfolio Overview</h2>
+          <div class="table-wrap">
+            <table>
+              <tbody id="portfolioSummaryRows"></tbody>
+            </table>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Fund</th>
+                  <th>Units</th>
+                  <th>Price</th>
+                  <th>Market Value (GBP)</th>
+                </tr>
+              </thead>
+              <tbody id="portfolioPagePositionsRows"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="/frontend/app.js" defer></script>
+  </body>
+</html>
