@@ -4,10 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Index Fund App</title>
-    <link rel="stylesheet" href="/styles.css?v=dashboard-carousel-v3" />
+    <link rel="stylesheet" href="/styles.css?v=dashboard-carousel-v5" />
     <style>
       #page-dashboard .dashboard-carousel-panel {
         padding: 16px 0 !important;
+        background: linear-gradient(180deg, rgba(var(--pale-rgb), 0.98), rgba(var(--soft-rgb), 0.46)) !important;
       }
 
       #page-dashboard .dashboard-carousel-shell {
@@ -33,12 +34,12 @@
 
       #page-dashboard .dashboard-carousel-shell::before {
         left: 0;
-        background: linear-gradient(90deg, var(--bg) 0%, rgba(223, 223, 223, 0) 100%);
+        background: linear-gradient(90deg, rgba(var(--pale-rgb), 1) 0%, rgba(var(--pale-rgb), 0) 100%);
       }
 
       #page-dashboard .dashboard-carousel-shell::after {
         right: 0;
-        background: linear-gradient(270deg, var(--bg) 0%, rgba(223, 223, 223, 0) 100%);
+        background: linear-gradient(270deg, rgba(var(--pale-rgb), 1) 0%, rgba(var(--pale-rgb), 0) 100%);
       }
 
       #page-dashboard .dashboard-carousel-track {
@@ -65,10 +66,10 @@
         width: var(--carousel-card-width) !important;
         height: var(--carousel-card-height) !important;
         overflow: hidden !important;
-        border: 3px solid #000 !important;
+        border: 1px solid rgba(var(--mid-rgb), 0.45) !important;
         border-radius: 16px !important;
-        background: #fff !important;
-        box-shadow: 4px 4px 0 #000 !important;
+        background: rgba(var(--pale-rgb), 0.98) !important;
+        box-shadow: 0 16px 36px rgba(var(--deep-rgb), 0.14) !important;
       }
 
       #page-dashboard .dashboard-card-slide img {
@@ -76,7 +77,7 @@
         width: 100% !important;
         height: 100% !important;
         object-fit: cover !important;
-        background: #d9d9d9 !important;
+        background: rgba(var(--soft-rgb), 0.42) !important;
       }
 
       @keyframes dashboardCarouselScroll {
@@ -519,6 +520,6 @@
 
     <div id="toast" class="toast"></div>
 
-    <script src="/frontend/app.js?v=dashboard-carousel-v3" defer></script>
+    <script src="/frontend/app.js?v=dashboard-carousel-v5" defer></script>
   </body>
 </html>
