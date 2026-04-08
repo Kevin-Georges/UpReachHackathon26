@@ -111,8 +111,8 @@ function resolveStaticFilePath(pathname) {
 }
 
 const POKEPRICE_API_KEY =
-  process.env.POKEPRICE_API_KEY || 
-  "pokeprice_free_e588a0d924dae302c219d9a6ed39b947acfff72e41039dcc";
+  process.env.POKEPRICE_API_KEY || "";
+  
 
 const TCG_BASE_URL =
   process.env.POKEPRICE_BASE_URL || "https://www.pokemonpricetracker.com/api/v2";
