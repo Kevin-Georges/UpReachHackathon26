@@ -13,11 +13,11 @@ const DEFAULT_PAGE = "marketplace";
 /** Root-relative paths so icons load from the dev server regardless of hash routes. */
 const ASSET_BASE = "/assets/";
 
-/** Fund row logos: filenames must exist under `/assets/` (see repo `assets/`). */
+/** Fund row logos: filenames must exist under `assets/` (see repo `assets/`). */
 const FUND_ICON_FILES = {
-  pokemon: "pokeball.svg",
-  mtg: "mtg.svg",
-  ygo: "ygo.svg",
+  "poke-global": "pokeball.svg",
+  "mtg-index": "mtg.svg",
+  "yugioh-index": "yugioh.svg",
 };
 
 /** Preferred API base before we discover a working one (same-origin on :3847, else points at Node). */
@@ -27,11 +27,11 @@ function resolveApiBase() {
     if (q) return q.replace(/\/$/, "");
   } catch (_e) {}
   const { protocol, hostname, port } = window.location;
-  if (protocol === "file:") return "http://127.0.0.1:3847";
+  if (protocol === "file:") return "http://127.0.0.1:4010";
   const p = String(port || "");
-  if (p === "3847") return "";
+  if (p === "4010") return "";
   if (hostname === "localhost" || hostname === "127.0.0.1") {
-    if (p === "" || p === "80" || p === "8080" || p === "443") return "http://127.0.0.1:3847";
+    if (p === "" || p === "80" || p === "8080" || p === "443") return "http://127.0.0.1:4010";
   }
   return "";
 }
@@ -51,8 +51,8 @@ function collectApiBases() {
   } catch (_e) {}
   push(resolveApiBase());
   push("");
-  push("http://127.0.0.1:3847");
-  push("http://localhost:3847");
+  push("http://127.0.0.1:4010");
+  push("http://localhost:4010");
   return list;
 }
 
@@ -61,6 +61,9 @@ function abortAfter(ms) {
   const t = setTimeout(() => c.abort(), ms);
   return { signal: c.signal, clear: () => clearTimeout(t) };
 }
+
+/** Cold `/api/funds` can take minutes (many set fetches + TCG). 8s caused empty UI / "failed". */
+const FUNDS_FETCH_TIMEOUT_MS = 180000;
 
 let __apiBase = null;
 
@@ -112,7 +115,7 @@ const api = {
     }
     const errors = [];
     for (const base of collectApiBases()) {
-      const { signal, clear } = abortAfter(8000);
+      const { signal, clear } = abortAfter(FUNDS_FETCH_TIMEOUT_MS);
       try {
         const res = await fetch(`${base}${path}`, { signal });
         clear();
@@ -264,13 +267,14 @@ function renderFunds() {
   if (!body) return;
 
   body.innerHTML = funds
-      .map((f) => {
-          const changeClass = f.dayChangePct >= 0 ? "good" : "bad";
-          const selected = state.selectedFundId === f.id;
-          const iconFile = FUND_ICON_FILES[f.id] || "cardex.svg";
-          const iconSrc = `${ASSET_BASE}${iconFile}`;
-          const fallbackSrc = `${ASSET_BASE}cardex.svg`;
+  .map((f) => {
+    const changeClass = f.dayChangePct >= 0 ? "good" : "bad";
+    const selected = state.selectedFundId === f.id;
 
+    const iconFile = FUND_ICON_FILES[f.id] || "cardex.svg";
+
+    const iconSrc = `${ASSET_BASE}${iconFile}`;
+    const fallbackSrc = `${ASSET_BASE}cardex.svg`;
           return `
           <tr data-fund-id="${f.id}" style="${selected ? "outline:3px solid #779DFF;" : ""}">
             <td>
@@ -988,6 +992,6 @@ document
     setActivePage(getPageFromHash(), false);
     await refreshAll();
   } catch (err) {
-    document.body.innerHTML = `<div style="padding:22px;font-family:Segoe UI,sans-serif;max-width:640px;"><h2>Failed to load app</h2><p>${err.message}</p><p>Run <code>node backend.js</code>, set <code>TCGAPI_KEY</code> in <code>.env</code>, open <code>http://localhost:3847/</code> (or add <code>?api=http://127.0.0.1:3847</code> if you use XAMPP). There is no offline placeholder data.</p></div>`;
+    document.body.innerHTML = `<div style="padding:22px;font-family:Segoe UI,sans-serif;max-width:640px;"><h2>Failed to load app</h2><p>${err.message}</p><p>Run <code>node backend.js</code>, set <code>TCGAPI_KEY</code> in <code>.env</code>, open <code>http://127.0.0.1:4010/</code> (or <code>?api=http://127.0.0.1:4010</code> with XAMPP). The first <code>/api/funds</code> load can take 1–2 minutes (many API calls). If you see rate limit errors, wait until midnight UTC or use a fresh TCG API key.</p></div>`;
   }
 })();

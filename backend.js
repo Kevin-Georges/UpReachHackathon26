@@ -2,13 +2,29 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { URL } = require("url");
-const {
-  getDailyFundSnapshots,
+
+ /* getDailyFundSnapshots,
   getFundHistory,
   getHistoryDbStatus,
   getLatestFundSnapshots,
   upsertDailyFundSnapshots,
 } = require("./database");
+*/
+
+const fetch = global.fetch || require("node-fetch");  //m
+
+const getDailyFundSnapshots = () => [];
+const getFundHistory = () => [];
+
+const getHistoryDbStatus = () => ({
+  enabled: false,
+  message: "Database disabled",
+});
+const getLatestFundSnapshots = () => [];
+const upsertDailyFundSnapshots = () => {};
+
+
+
 
 function loadLocalEnvFile(envFilePath = path.join(__dirname, ".env")) {
   if (!fs.existsSync(envFilePath)) return;
@@ -44,12 +60,58 @@ function loadLocalEnvFile(envFilePath = path.join(__dirname, ".env")) {
 
 loadLocalEnvFile();
 
-const PORT = process.env.PORT || 3000;
-const HOST = "127.0.0.1";
-const FRONTEND_PATH = path.join(__dirname, "frontend.html");
+const tcgPricing = require("./lib/pricing");
+const tcgClient = require("./lib/tcgClient");
+const tcgConfig = require("./lib/config");
+const { mergePersistedHistory } = require("./lib/history");
+
+const PORT = process.env.PORT || 4010;
+/** 127.0.0.1 = only this computer. Set HOST=0.0.0.0 in .env so phones / other PCs on the LAN can connect. */
+const HOST = process.env.HOST || "127.0.0.1";
+const FRONTEND_DIR = path.join(__dirname, "frontend");
+const FRONTEND_PATH = path.join(FRONTEND_DIR, "index.html");
+const ASSETS_DIR = path.join(__dirname, "assets");
+
+const STATIC_MIME = {
+  ".css": "text/css; charset=utf-8",
+  ".js": "application/javascript; charset=utf-8",
+  ".svg": "image/svg+xml",
+  ".json": "application/json",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".ico": "image/x-icon",
+  ".webp": "image/webp",
+};
+
+function fileUnderRoot(rootDir, relativePath) {
+  const root = path.resolve(rootDir);
+  const resolved = path.resolve(root, relativePath);
+  if (resolved === root) return null;
+  if (!resolved.startsWith(root + path.sep)) return null;
+  return resolved;
+}
+
+/** Maps URL paths used by the SPA to files under `frontend/` or `assets/`. */
+function resolveStaticFilePath(pathname) {
+  if (pathname === "/styles.css") {
+    return fileUnderRoot(FRONTEND_DIR, "styles.css");
+  }
+  if (pathname.startsWith("/frontend/")) {
+    const rel = decodeURIComponent(pathname.slice("/frontend/".length));
+    if (!rel) return null;
+    return fileUnderRoot(FRONTEND_DIR, rel);
+  }
+  if (pathname.startsWith("/assets/")) {
+    const rel = decodeURIComponent(pathname.slice("/assets/".length));
+    if (!rel) return null;
+    return fileUnderRoot(ASSETS_DIR, rel);
+  }
+  return null;
+}
 
 const POKEPRICE_API_KEY =
-  process.env.POKEPRICE_API_KEY ||
+  process.env.POKEPRICE_API_KEY || 
   "pokeprice_free_e588a0d924dae302c219d9a6ed39b947acfff72e41039dcc";
 
 const TCG_BASE_URL =
@@ -128,46 +190,22 @@ const FUNDS = [
     },
   },
   {
-    id: "diamond-pearl",
-    name: "Diamond & Pearl Era Index Fund",
-    type: "era",
+    id: "mtg-index",
+    name: "Magic: The Gathering Index",
+    type: "broad",
     description:
-      "Exposure focused on Diamond & Pearl era vintage-modern crossover cards.",
-    setWeights: {
-      dp1: 0.2,
-      dp2: 0.17,
-      dp3: 0.16,
-      dp4: 0.16,
-      dp5: 0.11,
-      dp6: 0.1,
-      dp7: 0.1,
-    },
+      "Broad exposure to liquid Magic: The Gathering staples priced via TCG API (USD→GBP).",
+    pricing: "tcgapi",
+    gameKey: "mtg",
   },
   {
-    id: "platinum",
-    name: "Platinum Era Index Fund",
-    type: "era",
+    id: "yugioh-index",
+    name: "Yu-Gi-Oh! Index",
+    type: "broad",
     description:
-      "Thematic index fund tracking key cards in the Platinum expansion cycle.",
-    setWeights: {
-      pl1: 0.35,
-      pl2: 0.23,
-      pl3: 0.21,
-      pl4: 0.21,
-    },
-  },
-  {
-    id: "heartgold-soulsilver",
-    name: "HeartGold & SoulSilver Index Fund",
-    type: "era",
-    description:
-      "Thematic index fund focused on HGSS-era cards and associated collector demand.",
-    setWeights: {
-      hgss1: 0.31,
-      hgss2: 0.24,
-      hgss3: 0.23,
-      hgss4: 0.22,
-    },
+      "Broad exposure to iconic Yu-Gi-Oh! cards priced via TCG API (USD→GBP).",
+    pricing: "tcgapi",
+    gameKey: "ygo",
   },
 ];
 
@@ -193,6 +231,14 @@ function sendJson(res, statusCode, payload) {
 function sendHtml(res, html) {
   res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
   res.end(html);
+}
+
+function sendStatic(res, statusCode, body, contentType) {
+  res.writeHead(statusCode, {
+    "Content-Type": contentType,
+    "Cache-Control": "public, max-age=3600",
+  });
+  res.end(body);
 }
 
 async function readBody(req) {
@@ -279,14 +325,198 @@ function writeDiskFundsCache(funds) {
   }
 }
 
+function fundHasBasketRows(fund) {
+  if (!fund) return false;
+  if (Array.isArray(fund.constituents) && fund.constituents.length > 0) return true;
+  return (
+    Array.isArray(fund.sets) &&
+    fund.sets.some((s) => safeNumber(s?.cardsUsed, 0) > 0)
+  );
+}
+
+/** True only for real API baskets — offline illustration rows must not overwrite disk cache. */
+function fundHasPersistableBasket(fund) {
+  if (!fundHasBasketRows(fund)) return false;
+  const demoRow =
+    Array.isArray(fund.constituents) &&
+    fund.constituents.some((c) => String(c?.setId || "") === "demo-offline");
+  if (demoRow) return false;
+  return true;
+}
+
+function historyPriceRange(history) {
+  if (!Array.isArray(history) || history.length < 2) return 0;
+  const prices = history
+    .map((p) => safeNumber(p?.price ?? p?.nav, NaN))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  if (prices.length < 2) return 0;
+  return Math.max(...prices) - Math.min(...prices);
+}
+
+function historyLooksPlaceholder(history) {
+  if (!Array.isArray(history) || history.length < 4) return true;
+  return historyPriceRange(history) < 0.05;
+}
+
+/**
+ * When live APIs 403/429 or time out, the pipeline returns £100 and empty baskets — then we were
+ * writing that to disk and wiping good data. Restore prior basket/NAV from disk for the same fund id.
+ */
+/** Last-resort rows so the UI is usable when disk + live APIs all have no basket (403/429). */
+const OFFLINE_DEMO_CONSTITUENTS = {
+  "poke-global": [
+    { name: "Charizard (illustrative)", number: "004", setName: "Base", rarity: "Rare", priceGBP: 40 },
+    { name: "Pikachu (illustrative)", number: "025", setName: "Base", rarity: "Common", priceGBP: 35 },
+    { name: "Mewtwo (illustrative)", number: "150", setName: "Base", rarity: "Rare", priceGBP: 25 },
+  ],
+  "mtg-index": [
+    { name: "Lightning Bolt (illustrative)", number: "—", setName: "Alpha", rarity: "Common", priceGBP: 48 },
+    { name: "Counterspell (illustrative)", number: "—", setName: "Unlimited", rarity: "Common", priceGBP: 28 },
+    { name: "Birds of Paradise (illustrative)", number: "—", setName: "Ravnica", rarity: "Rare", priceGBP: 24 },
+  ],
+  "yugioh-index": [
+    { name: "Dark Magician (illustrative)", number: "—", setName: "LOB", rarity: "Ultra", priceGBP: 36 },
+    { name: "Blue-Eyes White Dragon (illustrative)", number: "—", setName: "LOB", rarity: "Ultra", priceGBP: 38 },
+    { name: "Exodia piece (illustrative)", number: "—", setName: "LOB", rarity: "Rare", priceGBP: 22 },
+  ],
+};
+
+function applyOfflineDemoBasketsIfNeeded(funds) {
+  if (!Array.isArray(funds)) return funds;
+  return funds.map((fund) => {
+    if (fundHasBasketRows(fund)) return fund;
+    const tmpl = OFFLINE_DEMO_CONSTITUENTS[fund.id];
+    if (!tmpl?.length) return fund;
+    const targetNav = Math.max(
+      ETF_BASE_NAV,
+      safeNumber(fund.priceGBP ?? fund.blendedPriceGBP, ETF_BASE_NAV)
+    );
+    const rawPrices = tmpl.map((row) =>
+      Math.max(0.01, safeNumber(row.priceGBP, 1))
+    );
+    const sumP = rawPrices.reduce((a, b) => a + b, 0) || 1;
+    const sumP2 = rawPrices.reduce((a, b) => a + b * b, 0) || 1;
+    // Match live TCG math: contribution ∝ price, NAV = Σ(price²)/Σ(price) — scale so NAV = targetNav.
+    const alpha = (targetNav * sumP) / sumP2;
+    const scaledPrices = rawPrices.map((p) => Number((alpha * p).toFixed(2)));
+    const priceTotal = scaledPrices.reduce((a, b) => a + b, 0) || 1;
+    const navFromBasket = scaledPrices.reduce((s, p) => s + (p * p) / priceTotal, 0);
+    const nav = Number(
+      (Number.isFinite(navFromBasket) && navFromBasket > 0
+        ? navFromBasket
+        : targetNav
+      ).toFixed(2)
+    );
+    const constituents = tmpl.map((row, i) => ({
+      id: `${fund.id}-demo-${i}`,
+      name: row.name,
+      number: row.number,
+      setId: "demo-offline",
+      setName: row.setName,
+      rarity: row.rarity,
+      cardType: "Demo",
+      image: "",
+      priceGBP: scaledPrices[i],
+      contribution: Number(((scaledPrices[i] / priceTotal) * 100).toFixed(4)),
+      history: [],
+    }));
+    return {
+      ...fund,
+      constituents,
+      sets: [
+        {
+          setId: "demo-offline",
+          setWeight: 100,
+          cardsUsed: constituents.length,
+          cardsTarget: constituents.length,
+          setAverageGBP: nav,
+        },
+      ],
+      priceGBP: nav,
+      blendedPriceGBP: nav,
+      warning:
+        fund.warning ||
+        "Showing offline illustration basket only — live TCG/PokePrice APIs failed or rate-limited. Data is not market-real.",
+    };
+  });
+}
+
+function backfillFundsFromDiskPrior(funds, priorFundsList) {
+  if (!Array.isArray(funds) || funds.length === 0) return funds;
+  const priors = filterFundsToActiveTemplate(Array.isArray(priorFundsList) ? priorFundsList : []);
+  const priorById = new Map(priors.map((f) => [f.id, f]));
+  return funds.map((fund) => {
+    const prev = priorById.get(fund.id);
+    if (!prev) return fund;
+    let out = { ...fund };
+    const curEmpty = !fundHasBasketRows(fund);
+    const prevHas = fundHasBasketRows(prev);
+    if (curEmpty && prevHas) {
+      out = {
+        ...out,
+        constituents: Array.isArray(prev.constituents)
+          ? prev.constituents.map((c) => ({ ...c }))
+          : [],
+        sets: Array.isArray(prev.sets) ? prev.sets.map((s) => ({ ...s })) : out.sets,
+        warning:
+          out.warning ||
+          "Basket restored from last disk snapshot (live APIs failed or rate-limited). Refresh later for live data.",
+      };
+    }
+    const diskHistRich =
+      Array.isArray(prev.history) &&
+      prev.history.length >= 4 &&
+      historyPriceRange(prev.history) >= 0.05;
+    if (diskHistRich && historyLooksPlaceholder(out.history)) {
+      out.history = prev.history
+        .map((p) => ({
+          date: String(p?.date || "").slice(0, 10),
+          price: safeNumber(p?.price ?? p?.nav, NaN),
+        }))
+        .filter((p) => p.date && Number.isFinite(p.price) && p.price > 0);
+      out.warning =
+        out.warning ||
+        "Price history restored from disk — live run returned a flat/short placeholder series.";
+    }
+    const curNav = safeNumber(fund.priceGBP, 0);
+    const prevNav = safeNumber(prev.priceGBP ?? prev.blendedPriceGBP, 0);
+    if (curNav <= ETF_BASE_NAV + 0.01 && prevNav > ETF_BASE_NAV + 1) {
+      out.priceGBP = Number(prevNav.toFixed(2));
+      out.blendedPriceGBP = Number(
+        safeNumber(prev.blendedPriceGBP, prevNav).toFixed(2)
+      );
+      if (Array.isArray(prev.history) && prev.history.length >= 2) {
+        out.history = prev.history.map((p) => ({
+          date: String(p?.date || "").slice(0, 10),
+          price: safeNumber(p?.price ?? p?.nav, NaN),
+        })).filter((p) => p.date && Number.isFinite(p.price) && p.price > 0);
+      }
+      out.warning =
+        out.warning ||
+        "NAV restored from last disk snapshot — live APIs returned placeholder pricing.";
+    }
+    return out;
+  });
+}
+
 function enrichFundsWithDatabaseHistory(funds) {
-  if (!Array.isArray(funds) || funds.length === 0) return [];
+  const diskSnap = readDiskFundsCache();
+  const lifted = applyOfflineDemoBasketsIfNeeded(
+    backfillFundsFromDiskPrior(
+      Array.isArray(funds) ? funds : [],
+      diskSnap?.funds || []
+    )
+  );
+  const active = filterFundsToActiveTemplate(lifted);
+  if (!Array.isArray(active) || active.length === 0) return [];
 
   // Save one snapshot per fund per day. Same-day reruns simply update that day.
-  upsertDailyFundSnapshots(funds);
+  upsertDailyFundSnapshots(active);
 
-  return funds.map((fund) => {
-    const normalizedConstituents = normalizeConstituentContributions(fund.constituents);
+  return active.map((fund) => {
+    const normalizedConstituents = normalizeConstituentContributions(
+      Array.isArray(fund.constituents) ? fund.constituents : []
+    );
     const weightedBasketPrice = normalizedConstituents.reduce((sum, card) => {
       const price = safeNumber(card?.priceGBP, NaN);
       const contributionPct = safeNumber(card?.contribution, NaN);
@@ -372,8 +602,62 @@ function enrichFundsWithDatabaseHistory(funds) {
       Number.isFinite(currentPrice) && currentPrice > 0
         ? currentPrice
         : history[history.length - 1]?.price || 0;
-    const prev = history[Math.max(0, history.length - 2)]?.price || priceForChange;
-    const recomputedDayChange = prev ? ((priceForChange - prev) / prev) * 100 : 0;
+
+    const todayKey = new Date().toISOString().slice(0, 10);
+    let prevClose = NaN;
+    for (let i = history.length - 2; i >= 0; i -= 1) {
+      const d = String(history[i]?.date || "").slice(0, 10);
+      if (d && d < todayKey) {
+        prevClose = safeNumber(history[i]?.price, NaN);
+        break;
+      }
+    }
+    if (!Number.isFinite(prevClose) || prevClose <= 0) {
+      prevClose = safeNumber(history[Math.max(0, history.length - 2)]?.price, NaN);
+    }
+    if (!Number.isFinite(prevClose) || prevClose <= 0) {
+      prevClose = priceForChange;
+    }
+
+    let recomputedDayChange =
+      prevClose > 0 && priceForChange > 0
+        ? ((priceForChange - prevClose) / prevClose) * 100
+        : 0;
+
+    if (Math.abs(recomputedDayChange) < 0.01) {
+      try {
+        const diskRaw = readDiskFundsCache();
+        const prevEntry = filterFundsToActiveTemplate(diskRaw?.funds || []).find(
+          (x) => x.id === fund.id
+        );
+        const prevNav = safeNumber(
+          prevEntry?.priceGBP ?? prevEntry?.blendedPriceGBP,
+          NaN
+        );
+        if (
+          Number.isFinite(prevNav) &&
+          prevNav > 0 &&
+          Number.isFinite(priceForChange) &&
+          priceForChange > 0
+        ) {
+          const fromDisk = ((priceForChange - prevNav) / prevNav) * 100;
+          if (Number.isFinite(fromDisk) && Math.abs(fromDisk) >= 0.01) {
+            recomputedDayChange = fromDisk;
+          }
+        }
+      } catch (_e) {
+        /* ignore */
+      }
+    }
+
+    const upstreamDcp = safeNumber(fund.dayChangePct, NaN);
+    if (
+      Math.abs(recomputedDayChange) < 0.01 &&
+      Number.isFinite(upstreamDcp) &&
+      Math.abs(upstreamDcp) >= 0.01
+    ) {
+      recomputedDayChange = upstreamDcp;
+    }
     const { nav: _legacyNav, ...fundWithoutLegacyNav } = fund;
     const effectivePrice = Number.isFinite(currentPrice) && currentPrice > 0
       ? currentPrice
@@ -401,6 +685,13 @@ function enrichFundsWithDatabaseHistory(funds) {
 
 function getFundIds() {
   return FUNDS.map((fund) => fund.id);
+}
+
+/** Drop funds no longer in `FUNDS` (e.g. after removing an index) so disk/DB snapshots cannot resurrect them. */
+function filterFundsToActiveTemplate(funds) {
+  if (!Array.isArray(funds)) return [];
+  const allowed = new Set(FUNDS.map((f) => f.id));
+  return funds.filter((fund) => fund?.id && allowed.has(fund.id));
 }
 
 function safeNumber(value, fallback = 0) {
@@ -660,6 +951,23 @@ async function fetchCardsPage(params) {
   return {
     data: Array.isArray(payload?.data) ? payload.data : [],
     metadata: payload?.metadata || {},
+  };
+}
+
+/** Map TCG API card records into the same shape as PokePrice cards for basket / constituent rows. */
+function tcgApiRawToPokemonFundCard(raw) {
+  const n = tcgPricing.normalizeCard(raw);
+  return {
+    id: String(raw.id ?? ""),
+    name: n.name,
+    number: n.number,
+    setId: "tcgapi-pokemon",
+    setName: n.setName,
+    rarity: n.rarity,
+    cardType: "Pokemon TCG",
+    image: raw.image_url || raw.small_image || "",
+    priceGBP: n.priceGBP,
+    history: [],
   };
 }
 
@@ -990,42 +1298,334 @@ function allocateCardsAcrossSets(weightMap, totalCards) {
   return allocations;
 }
 
+const { LOCK_BASKET_SIZE, MIN_LOCKED_REFRESH_PRICES } = tcgConfig;
+const tcgApiLockedBaskets = new Map();
+const tcgApiLastPublishedNav = new Map();
+let tcgApiGameSlugsMemo = null;
+/** One in-flight `listAllGames` when MTG/YGO/Pokémon funds load in parallel (saves rate limit). */
+let tcgApiGameSlugsPromise = null;
+
+async function getTcgApiGameSlugs() {
+  if (tcgApiGameSlugsMemo) return tcgApiGameSlugsMemo;
+  if (!tcgApiGameSlugsPromise) {
+    tcgApiGameSlugsPromise = (async () => {
+      let games = [];
+      try {
+        games = await tcgClient.listAllGames();
+      } catch (e) {
+        console.warn(`[tcgapi] list games: ${e.message}`);
+      }
+      tcgApiGameSlugsMemo = tcgClient.resolveGameSlugs(games);
+      return tcgApiGameSlugsMemo;
+    })().finally(() => {
+      tcgApiGameSlugsPromise = null;
+    });
+  }
+  return tcgApiGameSlugsPromise;
+}
+
+function tcgSearchPlansForGameKey(gameKey) {
+  switch (gameKey) {
+    case "pokemon":
+      return [
+        { q: "charizard", sort: "price_desc", per_page: 14 },
+        { q: "blastoise", sort: "price_desc", per_page: 14 },
+        { q: "venusaur", sort: "price_desc", per_page: 14 },
+      ];
+    case "mtg":
+      return [
+        { q: "lightning bolt", sort: "price_desc", per_page: 14 },
+        { q: "black lotus", sort: "price_desc", per_page: 14 },
+        { q: "counterspell", sort: "price_desc", per_page: 14 },
+      ];
+    case "ygo":
+      return [
+        { q: "dark magician", sort: "price_desc", per_page: 14 },
+        { q: "blue eyes", sort: "price_desc", per_page: 14 },
+        { q: "exodia", sort: "price_desc", per_page: 14 },
+      ];
+    default:
+      return [];
+  }
+}
+
+async function discoverTcgApiCards(gameKey, gameSlug) {
+  const plans = tcgSearchPlansForGameKey(gameKey).map((p) => ({ ...p, game: gameSlug }));
+  const chunks = await Promise.all(
+    plans.map(async (params) => {
+      try {
+        const data = await tcgClient.tcgSearch(params);
+        return data.data || [];
+      } catch (e) {
+        console.warn(`[tcgapi] search ${JSON.stringify(params)}: ${e.message}`);
+        return [];
+      }
+    })
+  );
+  return chunks.flat();
+}
+
+async function loadTcgApiCardBasket(fund) {
+  if (!tcgConfig.API_KEY) return [];
+  const slugs = await getTcgApiGameSlugs();
+  const gameSlug = slugs[fund.gameKey];
+  if (!gameSlug) {
+    console.warn(`[tcgapi] no slug for gameKey ${fund.gameKey}`);
+    return [];
+  }
+  const fundId = fund.id;
+  const basket = tcgApiLockedBaskets.get(fundId);
+
+  if (basket?.ids?.length > 0) {
+    const cards = [];
+    for (const cid of basket.ids) {
+      try {
+        const c = await tcgClient.fetchCardRecordById(String(cid));
+        if (c) cards.push(c);
+      } catch (e) {
+        console.warn(`[tcgapi] cards/${cid}: ${e.message}`);
+      }
+    }
+    const priced = cards.filter((card) => tcgPricing.usdFromTcgApiCard(card) > 0).length;
+    if (priced >= MIN_LOCKED_REFRESH_PRICES) {
+      return cards;
+    }
+    tcgApiLockedBaskets.delete(fundId);
+  }
+
+  const all = await discoverTcgApiCards(fund.gameKey, gameSlug);
+  const seen = new Set();
+  const picked = [];
+  for (const c of all) {
+    if (c.id == null) continue;
+    const key = String(c.id);
+    if (seen.has(key)) continue;
+    if (tcgPricing.usdFromTcgApiCard(c) <= 0) continue;
+    seen.add(key);
+    picked.push(c);
+    if (picked.length >= LOCK_BASKET_SIZE) break;
+  }
+
+  if (picked.length === 0) return [];
+
+  const norms = picked.map((c) => tcgPricing.normalizeCard(c));
+  const total = norms.reduce((s, n) => s + n.priceGBP, 0) || 1;
+  const weightPct = norms.map((n) => (n.priceGBP / total) * 100);
+
+  tcgApiLockedBaskets.set(fundId, {
+    ids: picked.map((c) => Number(c.id)),
+    weightPct,
+  });
+  return picked;
+}
+
+function buildTcgApiConstituentsFrozen(cards, snap) {
+  if (!snap?.ids?.length || !snap?.weightPct?.length || snap.ids.length !== snap.weightPct.length) {
+    return [];
+  }
+  const byId = new Map();
+  for (const c of cards) {
+    const id = Number(c.id);
+    if (Number.isFinite(id)) byId.set(id, c);
+  }
+  const out = [];
+  for (let i = 0; i < snap.ids.length; i += 1) {
+    const raw = byId.get(snap.ids[i]);
+    if (!raw) continue;
+    const n = tcgPricing.normalizeCard(raw);
+    out.push({
+      id: String(raw.id),
+      name: n.name,
+      number: n.number,
+      setName: n.setName,
+      rarity: n.rarity,
+      cardType: "Trading card",
+      image: raw.image_url || raw.small_image || "",
+      priceGBP: tcgPricing.roundMoneyGBP(n.priceGBP),
+      contribution: snap.weightPct[i],
+      history: [],
+    });
+  }
+  return out;
+}
+
+async function computeTcgApiFund(fund) {
+  if (!tcgConfig.API_KEY) {
+    const nav = ETF_BASE_NAV;
+    const history = mergePersistedHistory([], nav, fund.id);
+    return {
+      id: fund.id,
+      name: fund.name,
+      type: fund.type,
+      description: `${fund.description} Set TCGAPI_KEY for live data (https://tcgapi.dev/dashboard/).`,
+      priceGBP: Number(nav.toFixed(2)),
+      blendedPriceGBP: Number(nav.toFixed(2)),
+      dayChangePct: 0,
+      history,
+      sets: [],
+      constituents: [],
+      asOf: new Date().toISOString(),
+      historySource: "fallback",
+      warning: "TCGAPI_KEY not set",
+    };
+  }
+
+  let cards = [];
+  try {
+    cards = await loadTcgApiCardBasket(fund);
+  } catch (e) {
+    console.warn(`[tcgapi] ${fund.id}: ${e.message}`);
+  }
+
+  const snap = tcgApiLockedBaskets.get(fund.id);
+  let constituents = [];
+  if (snap?.ids?.length && cards.length) {
+    constituents = buildTcgApiConstituentsFrozen(cards, snap);
+  }
+  if (constituents.length === 0 && cards.length) {
+    constituents = tcgPricing.buildConstituents(cards).map((c, i) => ({
+      id: String(cards[i]?.id ?? `${fund.id}-${i}`),
+      name: c.name,
+      number: c.number,
+      setName: c.setName,
+      rarity: c.rarity,
+      cardType: "Trading card",
+      image: cards[i]?.image_url || cards[i]?.small_image || "",
+      priceGBP: c.priceGBP,
+      contribution: c.contribution,
+      history: [],
+    }));
+  }
+
+  if (constituents.length === 0) {
+    const nav = ETF_BASE_NAV;
+    const history = mergePersistedHistory([], nav, fund.id);
+    return {
+      id: fund.id,
+      name: fund.name,
+      type: fund.type,
+      description: fund.description,
+      priceGBP: Number(nav.toFixed(2)),
+      blendedPriceGBP: Number(nav.toFixed(2)),
+      dayChangePct: 0,
+      history,
+      sets: [],
+      constituents: [],
+      asOf: new Date().toISOString(),
+      historySource: "fallback",
+      warning: "No priced cards from TCG API",
+    };
+  }
+
+  let nav = constituents.reduce((s, c) => s + (c.priceGBP * c.contribution) / 100, 0);
+  if (!Number.isFinite(nav) || nav <= 0) {
+    nav =
+      constituents.reduce((s, c) => s + c.priceGBP, 0) / Math.max(constituents.length, 1) || ETF_BASE_NAV;
+  }
+  nav = tcgPricing.roundMoneyGBP(nav);
+
+  const diskSnap = readDiskFundsCache();
+  const prevFund = diskSnap?.funds?.find((f) => f.id === fund.id);
+  const prevHistory = Array.isArray(prevFund?.history) ? prevFund.history : [];
+  const history = mergePersistedHistory(prevHistory, nav, fund.id);
+
+  const prevPublished = tcgApiLastPublishedNav.get(fund.id);
+  let dayChangePct = 0;
+  if (Number.isFinite(prevPublished) && prevPublished > 0) {
+    dayChangePct = ((nav - prevPublished) / prevPublished) * 100;
+  }
+  tcgApiLastPublishedNav.set(fund.id, nav);
+
+  const setRow = {
+    setId: fund.gameKey,
+    setWeight: 100,
+    cardsUsed: constituents.length,
+    cardsTarget: constituents.length,
+    setAverageGBP: Number(nav.toFixed(2)),
+    loadError: undefined,
+  };
+
+  return {
+    id: fund.id,
+    name: fund.name,
+    type: fund.type,
+    description: fund.description,
+    priceGBP: Number(nav.toFixed(2)),
+    blendedPriceGBP: Number(nav.toFixed(2)),
+    dayChangePct: Number(dayChangePct.toFixed(2)),
+    history,
+    sets: [setRow],
+    constituents: constituents.map((c, i) => ({ ...c, rankInSet: i + 1 })),
+    asOf: new Date().toISOString(),
+    historySource: "tcgapi",
+    warning: undefined,
+  };
+}
+
 async function computeFund(fund) {
   const weights = normalizeWeights(fund.setWeights);
   const setEntries = Object.entries(weights);
   const targetCardCount = getTargetCardCountForFund(fund);
   const setCardTargets = allocateCardsAcrossSets(weights, targetCardCount);
 
-  const setSnapshots = [];
-  for (const [setId, setWeight] of setEntries) {
-    const targetCardsForSet = Math.max(
-      1,
-      Math.floor(safeNumber(setCardTargets[setId], ETF_CARDS_PER_SET))
-    );
+  const setSnapshots = await Promise.all(
+    setEntries.map(async ([setId, setWeight]) => {
+      const targetCardsForSet = Math.max(
+        1,
+        Math.floor(safeNumber(setCardTargets[setId], ETF_CARDS_PER_SET))
+      );
+      try {
+        const cards = await fetchCardsForSet(setId, targetCardsForSet);
+        const top = cards.slice(0, targetCardsForSet);
+        const averageTop = top.length
+          ? top.reduce((sum, card) => sum + card.priceGBP, 0) / top.length
+          : 0;
+        return {
+          setId,
+          setWeight,
+          cards: top,
+          targetCards: targetCardsForSet,
+          setAverage: averageTop,
+          loadError: null,
+        };
+      } catch (err) {
+        return {
+          setId,
+          setWeight,
+          cards: [],
+          targetCards: targetCardsForSet,
+          setAverage: 0,
+          loadError: err?.message || "Unknown set fetch failure",
+        };
+      }
+    })
+  );
 
+  const totalCardsFromPokePrice = setSnapshots.reduce((n, s) => n + s.cards.length, 0);
+  let usedTcgApiPokemonFallback = false;
+  if (totalCardsFromPokePrice === 0 && fund.id === "poke-global" && tcgConfig.API_KEY) {
     try {
-      const cards = await fetchCardsForSet(setId, targetCardsForSet);
-      const top = cards.slice(0, targetCardsForSet);
-      const averageTop = top.length
-        ? top.reduce((sum, card) => sum + card.priceGBP, 0) / top.length
-        : 0;
-      setSnapshots.push({
-        setId,
-        setWeight,
-        cards: top,
-        targetCards: targetCardsForSet,
-        setAverage: averageTop,
-        loadError: null,
-      });
+      const tcgRaw = await loadTcgApiCardBasket({ id: fund.id, gameKey: "pokemon" });
+      if (tcgRaw.length > 0) {
+        const internalCards = tcgRaw.map(tcgApiRawToPokemonFundCard).filter((c) => c.id);
+        if (internalCards.length > 0) {
+          const avg =
+            internalCards.reduce((sum, c) => sum + c.priceGBP, 0) / internalCards.length;
+          setSnapshots = [
+            {
+              setId: "tcgapi-pokemon",
+              setWeight: 1,
+              cards: internalCards,
+              targetCards: internalCards.length,
+              setAverage: avg,
+              loadError: null,
+            },
+          ];
+          usedTcgApiPokemonFallback = true;
+        }
+      }
     } catch (err) {
-      setSnapshots.push({
-        setId,
-        setWeight,
-        cards: [],
-        targetCards: targetCardsForSet,
-        setAverage: 0,
-        loadError: err?.message || "Unknown set fetch failure",
-      });
+      console.warn(`[poke-global] TCG API basket fallback: ${err?.message || err}`);
     }
   }
 
@@ -1113,8 +1713,34 @@ async function computeFund(fund) {
     constituents,
     asOf: new Date().toISOString(),
     historySource: hasTrueHistory ? "api" : "fallback",
-    warning: undefined,
+    warning: usedTcgApiPokemonFallback
+      ? "Basket uses TCG API (PokePrice returned no priced cards — add POKEPRICE_API_KEY or fix 403 limits)."
+      : totalCardsFromPokePrice === 0 && fund.id === "poke-global"
+        ? "No basket: PokePrice failed for all sets. Set TCGAPI_KEY for TCG API fallback or POKEPRICE_API_KEY for live sets."
+        : undefined,
   };
+}
+
+function pokeGlobalBasketMissing(fund) {
+  if (!fund || fund.id !== "poke-global") return false;
+  const hasCards = Array.isArray(fund.constituents) && fund.constituents.length > 0;
+  const hasSetsWithCards =
+    Array.isArray(fund.sets) && fund.sets.some((s) => safeNumber(s?.cardsUsed, 0) > 0);
+  return !hasCards && !hasSetsWithCards;
+}
+
+function fundsListNeedsPokeGlobalBasketRebuild(funds) {
+  if (!Array.isArray(funds) || !tcgConfig.API_KEY) return false;
+  const pg = funds.find((f) => f.id === "poke-global");
+  if (!pokeGlobalBasketMissing(pg)) return false;
+  const sets = Array.isArray(pg?.sets) ? pg.sets : [];
+  if (sets.some((s) => s.setId === "tcgapi-pokemon")) return false;
+  if (sets.length === 0) return true;
+  return sets.some(
+    (s) =>
+      safeNumber(s?.cardsUsed, 0) <= 0 &&
+      String(s?.loadError || "").length > 0
+  );
 }
 
 function hasLiveLikeFundData(fund) {
@@ -1215,8 +1841,11 @@ async function getAllFunds(options = {}) {
   const cached = !forceRefresh ? cacheGet(cacheKey) : null;
   if (cached) {
     const enrichedCached = enrichFundsWithDatabaseHistory(cached);
-    cacheSet(cacheKey, enrichedCached);
-    return enrichedCached;
+    if (!fundsListNeedsPokeGlobalBasketRebuild(enrichedCached)) {
+      cacheSet(cacheKey, enrichedCached);
+      return enrichedCached;
+    }
+    cache.delete(cacheKey);
   }
 
   if (!forceRefresh) {
@@ -1225,7 +1854,11 @@ async function getAllFunds(options = {}) {
       const enrichedDbDailySnapshots = enrichFundsWithDatabaseHistory(dbDailySnapshots);
       const fundIds = getFundIds();
       const hasRichDbHistory = fundIds.every((fundId) => getFundHistory(fundId, 3650).length >= 2);
-      if (hasRichDbHistory && hasAnyLiveLikeFunds(enrichedDbDailySnapshots)) {
+      if (
+        hasRichDbHistory &&
+        hasAnyLiveLikeFunds(enrichedDbDailySnapshots) &&
+        !fundsListNeedsPokeGlobalBasketRebuild(enrichedDbDailySnapshots)
+      ) {
         cacheSet(cacheKey, enrichedDbDailySnapshots);
         return enrichedDbDailySnapshots;
       }
@@ -1233,7 +1866,10 @@ async function getAllFunds(options = {}) {
       const latestDbSnapshots = getLatestFundSnapshots(fundIds);
       if (latestDbSnapshots?.length) {
         const enrichedLatestDbSnapshots = enrichFundsWithDatabaseHistory(latestDbSnapshots);
-        if (hasAnyLiveLikeFunds(enrichedLatestDbSnapshots)) {
+        if (
+          hasAnyLiveLikeFunds(enrichedLatestDbSnapshots) &&
+          !fundsListNeedsPokeGlobalBasketRebuild(enrichedLatestDbSnapshots)
+        ) {
           cacheSet(cacheKey, enrichedLatestDbSnapshots);
           return enrichedLatestDbSnapshots;
         }
@@ -1242,20 +1878,28 @@ async function getAllFunds(options = {}) {
       const diskCachedForBackfill = readDiskFundsCache();
       if (diskCachedForBackfill?.funds?.length) {
         const enrichedDiskCached = enrichFundsWithDatabaseHistory(diskCachedForBackfill.funds);
-        if (hasAnyLiveLikeFunds(enrichedDiskCached)) {
+        if (
+          hasAnyLiveLikeFunds(enrichedDiskCached) &&
+          !fundsListNeedsPokeGlobalBasketRebuild(enrichedDiskCached)
+        ) {
           cacheSet(cacheKey, enrichedDiskCached);
           return enrichedDiskCached;
         }
       }
 
-      cacheSet(cacheKey, enrichedDbDailySnapshots);
-      return enrichedDbDailySnapshots;
+      if (!fundsListNeedsPokeGlobalBasketRebuild(enrichedDbDailySnapshots)) {
+        cacheSet(cacheKey, enrichedDbDailySnapshots);
+        return enrichedDbDailySnapshots;
+      }
     }
 
     const diskCached = readDiskFundsCache();
     if (diskCached?.funds?.length) {
       const enrichedDiskCached = enrichFundsWithDatabaseHistory(diskCached.funds);
-      if (hasAnyLiveLikeFunds(enrichedDiskCached)) {
+      if (
+        hasAnyLiveLikeFunds(enrichedDiskCached) &&
+        !fundsListNeedsPokeGlobalBasketRebuild(enrichedDiskCached)
+      ) {
         cacheSet(cacheKey, enrichedDiskCached);
         return enrichedDiskCached;
       }
@@ -1267,7 +1911,11 @@ async function getAllFunds(options = {}) {
   }
 
   allFundsInFlightPromise = (async () => {
-    const settled = await Promise.allSettled(FUNDS.map((fund) => computeFund(fund)));
+    const settled = await Promise.allSettled(
+      FUNDS.map((fund) =>
+        fund.pricing === "tcgapi" ? computeTcgApiFund(fund) : computeFund(fund)
+      )
+    );
     const computedFunds = settled
       .filter((result) => result.status === "fulfilled")
       .map((result) => result.value);
@@ -1296,7 +1944,8 @@ async function getAllFunds(options = {}) {
     const enrichedFunds = enrichFundsWithDatabaseHistory(funds);
     cacheSet(cacheKey, enrichedFunds);
     const hasLiveLikeData = hasAnyLiveLikeFunds(funds);
-    if (hasLiveLikeData) {
+    const hasPersistableBasket = enrichedFunds.some((f) => fundHasPersistableBasket(f));
+    if (hasLiveLikeData && hasPersistableBasket) {
       writeDiskFundsCache(enrichedFunds);
     }
 
@@ -1448,6 +2097,33 @@ const server = http.createServer(async (req, res) => {
     }
 
     const url = new URL(req.url, `http://${req.headers.host}`);
+
+    if (req.method === "GET") {
+      const staticPath = resolveStaticFilePath(url.pathname);
+      if (staticPath) {
+        try {
+          const stat = await fs.promises.stat(staticPath);
+          if (!stat.isFile()) {
+            sendJson(res, 404, { error: "Not found." });
+            return;
+          }
+          const buf = await fs.promises.readFile(staticPath);
+          const ext = path.extname(staticPath).toLowerCase();
+          const contentType = STATIC_MIME[ext] || "application/octet-stream";
+          sendStatic(res, 200, buf, contentType);
+        } catch (err) {
+          if (err && err.code === "ENOENT") {
+            sendJson(res, 404, { error: "Not found." });
+          } else {
+            sendJson(res, 500, {
+              error: "Internal server error.",
+              message: err.message,
+            });
+          }
+        }
+        return;
+      }
+    }
 
     if (url.pathname === "/" && req.method === "GET") {
       const html = fs.readFileSync(FRONTEND_PATH, "utf8");
