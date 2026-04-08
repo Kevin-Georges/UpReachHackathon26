@@ -231,7 +231,7 @@ function toast(message, isError = false) {
   const el = document.getElementById("toast");
   if (!el) return;
   el.textContent = message;
-  el.style.background = isError ? "#7f1d1d" : "#111827";
+  el.classList.toggle("error", !!isError);
   el.classList.add("show");
   setTimeout(() => el.classList.remove("show"), 2200);
 }
@@ -276,13 +276,13 @@ function renderFunds() {
     const iconSrc = `${ASSET_BASE}${iconFile}`;
     const fallbackSrc = `${ASSET_BASE}cardex.svg`;
           return `
-          <tr data-fund-id="${f.id}" style="${selected ? "outline:3px solid #779DFF;" : ""}">
+          <tr data-fund-id="${f.id}" class="${selected ? "selected-fund" : ""}">
             <td>
               <div style="display: flex; align-items: center; gap: 12px;">
                 <img src="${iconSrc}" class="game-icon" alt="" data-fund-icon="${f.id}" onerror="this.onerror=null;this.src='${fallbackSrc}'">
                 <div>
                   <strong>${normalizeFundName(f.name)}</strong><br />
-                  <span style="font-size:12px;color:#6b7280;">${normalizeDisplayText(f.description || "")}</span>
+                  <span class="fund-description">${normalizeDisplayText(f.description || "")}</span>
                 </div>
               </div>
             </td>
