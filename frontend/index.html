@@ -4,7 +4,106 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Index Fund App</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/styles.css?v=dashboard-carousel-v5" />
+    <style>
+      #page-dashboard .dashboard-carousel-panel {
+        padding: 16px 0 !important;
+        background: linear-gradient(180deg, rgba(var(--pale-rgb), 0.98), rgba(var(--soft-rgb), 0.46)) !important;
+      }
+
+      #page-dashboard .dashboard-carousel-shell {
+        --carousel-gap: 18px;
+        --carousel-card-width: 176px;
+        --carousel-card-height: 246px;
+        position: relative !important;
+        width: 100% !important;
+        overflow: hidden !important;
+        padding: 4px 18px !important;
+      }
+
+      #page-dashboard .dashboard-carousel-shell::before,
+      #page-dashboard .dashboard-carousel-shell::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: clamp(48px, 7vw, 110px);
+        z-index: 2;
+        pointer-events: none;
+      }
+
+      #page-dashboard .dashboard-carousel-shell::before {
+        left: 0;
+        background: linear-gradient(90deg, rgba(var(--pale-rgb), 1) 0%, rgba(var(--pale-rgb), 0) 100%);
+      }
+
+      #page-dashboard .dashboard-carousel-shell::after {
+        right: 0;
+        background: linear-gradient(270deg, rgba(var(--pale-rgb), 1) 0%, rgba(var(--pale-rgb), 0) 100%);
+      }
+
+      #page-dashboard .dashboard-carousel-track {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: var(--carousel-gap) !important;
+        width: max-content !important;
+        animation: dashboardCarouselScroll 120s linear infinite !important;
+        will-change: transform;
+      }
+
+      #page-dashboard .dashboard-carousel-group {
+        display: flex !important;
+        flex: none !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: var(--carousel-gap) !important;
+      }
+
+      #page-dashboard .dashboard-card-slide {
+        display: block !important;
+        flex: 0 0 var(--carousel-card-width) !important;
+        width: var(--carousel-card-width) !important;
+        height: var(--carousel-card-height) !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(var(--mid-rgb), 0.45) !important;
+        border-radius: 16px !important;
+        background: rgba(var(--pale-rgb), 0.98) !important;
+        box-shadow: 0 16px 36px rgba(var(--deep-rgb), 0.14) !important;
+      }
+
+      #page-dashboard .dashboard-card-slide img {
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        background: rgba(var(--soft-rgb), 0.42) !important;
+      }
+
+      @keyframes dashboardCarouselScroll {
+        from {
+          transform: translateX(0);
+        }
+
+        to {
+          transform: translateX(-50%);
+        }
+      }
+
+      @media (max-width: 900px) {
+        #page-dashboard .dashboard-carousel-shell {
+          --carousel-gap: 14px;
+          --carousel-card-width: 138px;
+          --carousel-card-height: 194px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #page-dashboard .dashboard-carousel-track {
+          animation: none !important;
+        }
+      }
+    </style>
   </head>
   <body>
     <header class="top-nav">
@@ -100,6 +199,35 @@
               </thead>
               <tbody id="dashboardFundRows"></tbody>
             </table>
+          </div>
+        </section>
+
+        <section class="panel dashboard-carousel-panel" aria-label="Trading card carousel">
+          <div class="dashboard-carousel-shell">
+            <div class="dashboard-carousel-track">
+              <div class="dashboard-carousel-group">
+                <article class="dashboard-card-slide"><img src="/assets/blacklotus.jpg" alt="Black Lotus" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/blueeyeswhitedragon.jpg" alt="Blue-Eyes White Dragon" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/charizard.jpg" alt="Charizard" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/darkmagician.jpg" alt="Dark Magician" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/escapedetection.jpg" alt="Escape Detection" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/eternaltaskmaster.jpg" alt="Eternal Taskmaster" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/pikachu.jpg" alt="Pikachu" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/potofgreed.jpg" alt="Pot of Greed" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/rayquaza.jpg" alt="Rayquaza" /></article>
+              </div>
+              <div class="dashboard-carousel-group" aria-hidden="true">
+                <article class="dashboard-card-slide"><img src="/assets/blacklotus.jpg" alt="" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/blueeyeswhitedragon.jpg" alt="" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/charizard.jpg" alt="" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/darkmagician.jpg" alt="" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/escapedetection.jpg" alt="" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/eternaltaskmaster.jpg" alt="" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/pikachu.jpg" alt="" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/potofgreed.jpg" alt="" /></article>
+                <article class="dashboard-card-slide"><img src="/assets/rayquaza.jpg" alt="" /></article>
+              </div>
+            </div>
           </div>
         </section>
       </section>
@@ -392,6 +520,6 @@
 
     <div id="toast" class="toast"></div>
 
-    <script src="/frontend/app.js" defer></script>
+    <script src="/frontend/app.js?v=dashboard-carousel-v5" defer></script>
   </body>
 </html>
