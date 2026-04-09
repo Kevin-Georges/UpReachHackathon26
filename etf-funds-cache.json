@@ -1,5 +1,5 @@
 {
-  "savedAt": "2026-04-08T00:30:44.297Z",
+  "savedAt": "2026-04-09T13:17:42.440Z",
   "source": "pokemon-etf-backend",
   "config": {
     "apiBaseUrl": "https://www.pokemonpricetracker.com/api/v2",
@@ -19,15 +19,15 @@
       "dayChangePct": -3.38,
       "history": [
         {
-          "date": "2026-04-06",
-          "price": 100
-        },
-        {
           "date": "2026-04-07",
           "price": 100
         },
         {
           "date": "2026-04-08",
+          "price": 100
+        },
+        {
+          "date": "2026-04-09",
           "price": 96.616666
         }
       ],
@@ -81,7 +81,7 @@
           "history": []
         }
       ],
-      "asOf": "2026-04-08T00:30:44.295Z",
+      "asOf": "2026-04-09T13:17:42.438Z",
       "historySource": "fallback",
       "warning": "Basket restored from last disk snapshot (live APIs failed or rate-limited). Refresh later for live data."
     },
@@ -90,14 +90,10 @@
       "name": "Magic: The Gathering Index",
       "type": "broad",
       "description": "Broad exposure to liquid Magic: The Gathering staples priced via TCG API (USD→GBP).",
-      "priceGBP": 555.44,
-      "blendedPriceGBP": 555.44,
-      "dayChangePct": 455.44,
+      "priceGBP": 604.84,
+      "blendedPriceGBP": 604.84,
+      "dayChangePct": -7.09,
       "history": [
-        {
-          "date": "2026-03-10",
-          "price": 97.88
-        },
         {
           "date": "2026-03-11",
           "price": 97.88
@@ -212,16 +208,20 @@
         },
         {
           "date": "2026-04-08",
-          "price": 555.443158
+          "price": 650.984045
+        },
+        {
+          "date": "2026-04-09",
+          "price": 604.842504
         }
       ],
       "sets": [
         {
           "setId": "mtg",
           "setWeight": 100,
-          "cardsUsed": 34,
-          "cardsTarget": 34,
-          "setAverageGBP": 1955.19
+          "cardsUsed": 31,
+          "cardsTarget": 31,
+          "setAverageGBP": 2900.84
         }
       ],
       "constituents": [
@@ -234,7 +234,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/619755.jpg",
           "priceGBP": 569.4,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 1
         },
@@ -247,7 +247,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/38253.jpg",
           "priceGBP": 533.25,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 2
         },
@@ -260,7 +260,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/1174.jpg",
           "priceGBP": 505.59,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 3
         },
@@ -273,7 +273,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/8819.jpg",
           "priceGBP": 312.04,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 4
         },
@@ -286,7 +286,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/109946.jpg",
           "priceGBP": 0.5,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 5
         },
@@ -299,7 +299,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/97539.jpg",
           "priceGBP": 67.13,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 6
         },
@@ -312,7 +312,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/562026.jpg",
           "priceGBP": 43.45,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 7
         },
@@ -325,7 +325,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/109640.jpg",
           "priceGBP": 0.5,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 8
         },
@@ -338,7 +338,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/232239.jpg",
           "priceGBP": 0.5,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 9
         },
@@ -351,7 +351,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/109286.jpg",
           "priceGBP": 0.5,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 10
         },
@@ -364,7 +364,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/9121.jpg",
           "priceGBP": 31.6,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 11
         },
@@ -377,7 +377,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/38317.jpg",
           "priceGBP": 16.93,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 12
         },
@@ -390,20 +390,20 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/158546.jpg",
           "priceGBP": 15.79,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 13
         },
         {
-          "id": "50289",
-          "name": "Lightning Bolt (0901)",
-          "number": "901",
-          "setName": "Secret Lair Drop Series",
-          "rarity": "P",
+          "id": "54569",
+          "name": "Lightning Bolt - 1996 Mark Justice (4ED)",
+          "number": "?",
+          "setName": "World Championship Decks",
+          "rarity": "S",
           "cardType": "Trading card",
-          "image": "https://product-images.tcgplayer.com/fit-in/400x400/518875.jpg",
-          "priceGBP": 11.76,
-          "contribution": 2.941176,
+          "image": "https://product-images.tcgplayer.com/fit-in/400x400/159164.jpg",
+          "priceGBP": 15.75,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 14
         },
@@ -416,7 +416,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/21480.jpg",
           "priceGBP": 0.5,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 15
         },
@@ -429,7 +429,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/192209.jpg",
           "priceGBP": 78.21,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 16
         },
@@ -442,7 +442,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/192210.jpg",
           "priceGBP": 63.98,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 17
         },
@@ -455,7 +455,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/192211.jpg",
           "priceGBP": 56.87,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 18
         },
@@ -468,7 +468,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/192213.jpg",
           "priceGBP": 55.29,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 19
         },
@@ -481,7 +481,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/192212.jpg",
           "priceGBP": 56.08,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 20
         },
@@ -494,7 +494,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/192214.jpg",
           "priceGBP": 52.13,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 21
         },
@@ -507,7 +507,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/192215.jpg",
           "priceGBP": 0.5,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 22
         },
@@ -520,7 +520,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/192208.jpg",
           "priceGBP": 37.12,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 23
         },
@@ -533,7 +533,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/449115.jpg",
           "priceGBP": 6316.01,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 24
         },
@@ -546,7 +546,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/449429.jpg",
           "priceGBP": 6122.5,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 25
         },
@@ -559,22 +559,9 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/8989.jpg",
           "priceGBP": 0.5,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 26
-        },
-        {
-          "id": "112426",
-          "name": "Black Lotus",
-          "number": "?",
-          "setName": "Beta Edition",
-          "rarity": "R",
-          "cardType": "Trading card",
-          "image": "https://product-images.tcgplayer.com/fit-in/400x400/8687.jpg",
-          "priceGBP": 0.5,
-          "contribution": 2.941176,
-          "history": [],
-          "rankInSet": 27
         },
         {
           "id": "112731",
@@ -585,9 +572,9 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/97413.jpg",
           "priceGBP": 3452.3,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
-          "rankInSet": 28
+          "rankInSet": 27
         },
         {
           "id": "114581",
@@ -598,9 +585,9 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/1073.jpg",
           "priceGBP": 0.5,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
-          "rankInSet": 29
+          "rankInSet": 28
         },
         {
           "id": "50197",
@@ -611,9 +598,9 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/625668.jpg",
           "priceGBP": 166.6,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
-          "rankInSet": 30
+          "rankInSet": 29
         },
         {
           "id": "188893",
@@ -624,9 +611,9 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/129541.jpg",
           "priceGBP": 121.83,
-          "contribution": 2.941176,
+          "contribution": 3.225806,
           "history": [],
-          "rankInSet": 31
+          "rankInSet": 30
         },
         {
           "id": "123054",
@@ -637,54 +624,23 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/589737.jpg",
           "priceGBP": 56.27,
-          "contribution": 2.941176,
+          "contribution": 3.22582,
           "history": [],
-          "rankInSet": 32
-        },
-        {
-          "id": "130456",
-          "name": "Counterspell",
-          "number": "?",
-          "setName": "Judge Promos",
-          "rarity": "P",
-          "cardType": "Trading card",
-          "image": "https://product-images.tcgplayer.com/fit-in/400x400/21702.jpg",
-          "priceGBP": 63.2,
-          "contribution": 2.941176,
-          "history": [],
-          "rankInSet": 33
-        },
-        {
-          "id": "112583",
-          "name": "Counterspell (CE)",
-          "number": "?",
-          "setName": "Collector's Edition",
-          "rarity": "U",
-          "cardType": "Trading card",
-          "image": "https://product-images.tcgplayer.com/fit-in/400x400/97444.jpg",
-          "priceGBP": 75.24,
-          "contribution": 2.941192,
-          "history": [],
-          "rankInSet": 34
+          "rankInSet": 31
         }
       ],
-      "asOf": "2026-04-08T00:30:42.705Z",
-      "historySource": "fallback",
-      "warning": "Basket restored from last disk snapshot (live APIs failed or rate-limited). Refresh later for live data."
+      "asOf": "2026-04-09T13:17:42.088Z",
+      "historySource": "tcgapi"
     },
     {
       "id": "yugioh-index",
       "name": "Yu-Gi-Oh! Index",
       "type": "broad",
       "description": "Broad exposure to iconic Yu-Gi-Oh! cards priced via TCG API (USD→GBP).",
-      "priceGBP": 210.91,
-      "blendedPriceGBP": 210.91,
-      "dayChangePct": 110.91,
+      "priceGBP": 223.32,
+      "blendedPriceGBP": 223.32,
+      "dayChangePct": 8.67,
       "history": [
-        {
-          "date": "2026-03-10",
-          "price": 99.39
-        },
         {
           "date": "2026-03-11",
           "price": 99.39
@@ -799,16 +755,20 @@
         },
         {
           "date": "2026-04-08",
-          "price": 210.911816
+          "price": 205.498786
+        },
+        {
+          "date": "2026-04-09",
+          "price": 223.316743
         }
       ],
       "sets": [
         {
           "setId": "ygo",
           "setWeight": 100,
-          "cardsUsed": 33,
-          "cardsTarget": 33,
-          "setAverageGBP": 936.79
+          "cardsUsed": 31,
+          "cardsTarget": 31,
+          "setAverageGBP": 937.62
         }
       ],
       "constituents": [
@@ -821,7 +781,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/528671.jpg",
           "priceGBP": 2125.86,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 1
         },
@@ -834,7 +794,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/235736.jpg",
           "priceGBP": 474,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 2
         },
@@ -847,7 +807,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/206882.jpg",
           "priceGBP": 434.49,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 3
         },
@@ -860,7 +820,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/453040.jpg",
           "priceGBP": 363.83,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 4
         },
@@ -873,7 +833,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/22941.jpg",
           "priceGBP": 1381.9,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 5
         },
@@ -886,7 +846,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/21877.jpg",
           "priceGBP": 612.25,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 6
         },
@@ -899,7 +859,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/269578.jpg",
           "priceGBP": 181.7,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 7
         },
@@ -912,7 +872,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/629374.jpg",
           "priceGBP": 188.81,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 8
         },
@@ -925,7 +885,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/678915.jpg",
           "priceGBP": 158,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 9
         },
@@ -938,7 +898,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/94949.jpg",
           "priceGBP": 146.1,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 10
         },
@@ -951,7 +911,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/94896.jpg",
           "priceGBP": 0.5,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 11
         },
@@ -964,7 +924,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/478804.jpg",
           "priceGBP": 0.5,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 12
         },
@@ -977,7 +937,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/22794.jpg",
           "priceGBP": 0.5,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 13
         },
@@ -990,7 +950,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/592813.jpg",
           "priceGBP": 90.85,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 14
         },
@@ -1003,7 +963,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/488581.jpg",
           "priceGBP": 189.59,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 15
         },
@@ -1016,7 +976,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/451536.jpg",
           "priceGBP": 0.5,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 16
         },
@@ -1029,7 +989,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/451372.jpg",
           "priceGBP": 0.5,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 17
         },
@@ -1042,7 +1002,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/478122.jpg",
           "priceGBP": 5.98,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 18
         },
@@ -1055,7 +1015,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/276372.jpg",
           "priceGBP": 0.5,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 19
         },
@@ -1068,7 +1028,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/650890.jpg",
           "priceGBP": 0.5,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 20
         },
@@ -1081,7 +1041,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/26541.jpg",
           "priceGBP": 0.5,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 21
         },
@@ -1094,7 +1054,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/22942.jpg",
           "priceGBP": 172.99,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 22
         },
@@ -1107,7 +1067,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/454002.jpg",
           "priceGBP": 128.71,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 23
         },
@@ -1120,7 +1080,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/650889.jpg",
           "priceGBP": 0.5,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 24
         },
@@ -1133,7 +1093,7 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/554906.jpg",
           "priceGBP": 40.05,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 25
         },
@@ -1146,22 +1106,9 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/21954.jpg",
           "priceGBP": 106.94,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 26
-        },
-        {
-          "id": "249606",
-          "name": "The Unstoppable Exodia Incarnate (Quarter Century Secret Rare)",
-          "number": "INFO-EN033",
-          "setName": "The Infinite Forbidden",
-          "rarity": "Quarter Century Secret Rare",
-          "cardType": "Trading card",
-          "image": "https://product-images.tcgplayer.com/fit-in/400x400/559212.jpg",
-          "priceGBP": 32.76,
-          "contribution": 3.030303,
-          "history": [],
-          "rankInSet": 27
         },
         {
           "id": "278686",
@@ -1172,7 +1119,20 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/487299.jpg",
           "priceGBP": 46.57,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
+          "history": [],
+          "rankInSet": 27
+        },
+        {
+          "id": "249606",
+          "name": "The Unstoppable Exodia Incarnate (Quarter Century Secret Rare)",
+          "number": "INFO-EN033",
+          "setName": "The Infinite Forbidden",
+          "rarity": "Quarter Century Secret Rare",
+          "cardType": "Trading card",
+          "image": "https://product-images.tcgplayer.com/fit-in/400x400/559212.jpg",
+          "priceGBP": 32.76,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 28
         },
@@ -1185,22 +1145,9 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/78091.jpg",
           "priceGBP": 35.94,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
           "rankInSet": 29
-        },
-        {
-          "id": "205349",
-          "name": "Exodia the Forbidden One (Blue)",
-          "number": "DL11-EN006",
-          "setName": "Duelist League Promo",
-          "rarity": "Rare",
-          "cardType": "Trading card",
-          "image": "https://product-images.tcgplayer.com/fit-in/400x400/80313.jpg",
-          "priceGBP": 19.74,
-          "contribution": 3.030303,
-          "history": [],
-          "rankInSet": 30
         },
         {
           "id": "290727",
@@ -1211,9 +1158,9 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/158235.jpg",
           "priceGBP": 0.5,
-          "contribution": 3.030303,
+          "contribution": 3.225806,
           "history": [],
-          "rankInSet": 31
+          "rankInSet": 30
         },
         {
           "id": "319226",
@@ -1224,27 +1171,13 @@
           "cardType": "Trading card",
           "image": "https://product-images.tcgplayer.com/fit-in/400x400/24618.jpg",
           "priceGBP": 0.5,
-          "contribution": 3.030303,
+          "contribution": 3.22582,
           "history": [],
-          "rankInSet": 32
-        },
-        {
-          "id": "252523",
-          "name": "Exodia the Forbidden One",
-          "number": "LOB-EN124",
-          "setName": "Legend of Blue Eyes White Dragon (Worldwide English)",
-          "rarity": "Ultra Rare",
-          "cardType": "Trading card",
-          "image": "https://product-images.tcgplayer.com/fit-in/400x400/476450.jpg",
-          "priceGBP": 17.53,
-          "contribution": 3.030304,
-          "history": [],
-          "rankInSet": 33
+          "rankInSet": 31
         }
       ],
-      "asOf": "2026-04-08T00:30:42.068Z",
-      "historySource": "fallback",
-      "warning": "Basket restored from last disk snapshot (live APIs failed or rate-limited). Refresh later for live data."
+      "asOf": "2026-04-09T13:17:41.022Z",
+      "historySource": "tcgapi"
     }
   ]
 }
